@@ -1,0 +1,90 @@
+import { jsPDF } from 'jspdf';
+
+export const downloadPDF = (camReport, detectedParams) => {
+  if (!camReport || !detectedParams) {
+    alert('No report data available to download.');
+    return;
+  }
+
+  try {
+    const doc = new jsPDF();
+    const margin = 20; let y = 20;
+
+    // Safe string accessor
+    const str = (val, fallback = 'N/A') => {
+      if (val === null || val === undefined) return fallback;
+      return String(val);
+    };
+
+    const addWrappedText = (text, x, yOffset, maxWidth) => {
+      const safeText = str(text, 'No information available.');
+      const lines = doc.splitTextToSize(safeText, maxWidth);
+      doc.text(lines, x, yOffset); return lines.length * 6;
+    };
+
+    // Auto page-break helper
+    const checkPageBreak = (needed = 30) => {
+      if (y + needed > 280) { doc.addPage(); y = 20; }
+    };
+
+    // Header
+    doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.setTextColor(30, 41, 59);
+    doc.text("CREDIT APPRAISAL MEMO", margin, y); y += 15;
+
+    doc.setFontSize(12); doc.text("Entity Name:", margin, y);
+    doc.setFont("helvetica", "normal"); doc.text(str(detectedParams.company, 'Unknown'), margin + 35, y); y += 8;
+    doc.setFont("helvetica", "bold"); doc.text("Sector:", margin, y);
+    doc.setFont("helvetica", "normal"); doc.text(str(detectedParams.sector, 'Unknown'), margin + 35, y); y += 8;
+    doc.setFont("helvetica", "bold"); doc.text("Date:", margin, y);
+    doc.setFont("helvetica", "normal"); doc.text(new Date().toLocaleDateString(), margin + 35, y); y += 15;
+    doc.setDrawColor(200, 200, 200); doc.line(margin, y, 190, y); y += 15;
+
+    // Decision
+    const decision = str(camReport.decision, 'PENDING');
+    doc.setFontSize(16); doc.setFont("helvetica", "bold");
+    if (decision === 'APPROVE') doc.setTextColor(16, 185, 129); else doc.setTextColor(239, 68, 68);
+    doc.text(`FINAL DECISION: ${decision}`, margin, y); y += 10;
+
+    doc.setFontSize(12); doc.setTextColor(71, 85, 105);
+    doc.text(`Suggested Limit: ${str(camReport.recommended_loan_amount)}`, margin, y); y += 7;
+    doc.text(`Risk Premium: ${str(camReport.recommended_interest_rate)}`, margin, y); y += 15;
+
+    // Rationale
+    checkPageBreak(40);
+    doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.setTextColor(30, 41, 59);
+    doc.text("Decision Rationale:", margin, y); y += 8;
+    doc.setFontSize(11); doc.setFont("helvetica", "normal"); doc.setTextColor(50, 50, 50);
+    y += addWrappedText(camReport.decision_rationale, margin, y, 170); y += 10;
+
+    // Five Cs
+    checkPageBreak(30);
+    doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.setTextColor(30, 41, 59);
+    doc.text("Analysis of the Five C's:", margin, y); y += 10;
+
+    const fiveCs = camReport.five_cs || {};
+    const cs = [
+      { title: "Character", content: str(fiveCs.character) },
+      { title: "Capacity", content: str(fiveCs.capacity) },
+      { title: "Capital", content: str(fiveCs.capital) },
+      { title: "Collateral", content: str(fiveCs.collateral) },
+      { title: "Conditions", content: str(fiveCs.conditions) }
+    ];
+
+    doc.setFontSize(11);
+    cs.forEach(c => {
+      checkPageBreak(30);
+      doc.setFont("helvetica", "bold"); doc.setTextColor(30, 41, 59);
+      doc.text(`${c.title}:`, margin, y); y += 6;
+      doc.setFont("helvetica", "normal"); doc.setTextColor(71, 85, 105);
+      y += addWrappedText(c.content, margin, y, 170); y += 8;
+    });
+
+    // Generate safe filename
+    const companyName = str(detectedParams.company, 'Report').replace(/[^a-zA-Z0-9]/g, '_').substring(0, 50);
+    doc.save(`CAM_${companyName}.pdf`);
+
+  } catch (err) {
+    console.error('PDF generation error:', err);
+    alert(`Failed to generate PDF: ${err.message}. Please try again.`);
+  }
+};
