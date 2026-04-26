@@ -1,3 +1,14 @@
+/**
+ * ============================================================
+ *  CREDENT — AI Credit Appraisal Engine
+ *  © 2025 Asenra. All Rights Reserved.
+ *  https://asenra.in
+ *
+ *  This source code is the exclusive intellectual property of
+ *  Asenra. Unauthorized reproduction, distribution, or use
+ *  of this code, in whole or in part, is strictly prohibited.
+ * ============================================================
+ */
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -53,7 +64,7 @@ export default function EngineView({ onExit, theme, toggleTheme, onSwitchToManag
 
   const [auditTrail, setAuditTrail] = useState(() => {
     try {
-      const saved = localStorage.getItem('intelliAssess_history');
+      const saved = localStorage.getItem('credent_history');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -61,7 +72,7 @@ export default function EngineView({ onExit, theme, toggleTheme, onSwitchToManag
   });
 
   useEffect(() => {
-    localStorage.setItem('intelliAssess_history', JSON.stringify(auditTrail));
+    localStorage.setItem('credent_history', JSON.stringify(auditTrail));
   }, [auditTrail]);
 
   // Fetch from SQLite Backend
@@ -109,7 +120,7 @@ export default function EngineView({ onExit, theme, toggleTheme, onSwitchToManag
   const clearHistory = () => {
     if (window.confirm("Clear all past appraisal history?")) {
       setAuditTrail([]);
-      localStorage.removeItem('intelliAssess_history');
+      localStorage.removeItem('credent_history');
     }
   };
 

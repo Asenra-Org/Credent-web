@@ -1,3 +1,14 @@
+/**
+ * ============================================================
+ *  CREDENT — AI Credit Appraisal Engine
+ *  © 2025 Asenra. All Rights Reserved.
+ *  https://asenra.in
+ *
+ *  This source code is the exclusive intellectual property of
+ *  Asenra. Unauthorized reproduction, distribution, or use
+ *  of this code, in whole or in part, is strictly prohibited.
+ * ============================================================
+ */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -12,29 +23,29 @@ import EngineView from './components/EngineView';
 import ManagerDashboard from './components/ManagerDashboard';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState(() => sessionStorage.getItem('intelliassess_view') || 'home');
-  const [theme, setTheme] = useState(() => localStorage.getItem('intelliassess_theme') || 'light');
+  const [currentView, setCurrentView] = useState(() => sessionStorage.getItem('credent_view') || 'home');
+  const [theme, setTheme] = useState(() => localStorage.getItem('credent_theme') || 'light');
 
   // Handle Theme Persistence
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('intelliassess_theme', theme);
+    localStorage.setItem('credent_theme', theme);
   }, [theme]);
 
   // Session Management (Cookie)
   useEffect(() => {
-    const hasSession = document.cookie.split('; ').find(row => row.startsWith('intelliassess_session='));
+    const hasSession = document.cookie.split('; ').find(row => row.startsWith('credent_session='));
     if (!hasSession) {
       const expiry = new Date();
       expiry.setTime(expiry.getTime() + (1 * 24 * 60 * 60 * 1000)); // 1 day
-      document.cookie = `intelliassess_session=active; expires=${expiry.toUTCString()}; path=/; SameSite=Strict`;
+      document.cookie = `credent_session=active; expires=${expiry.toUTCString()}; path=/; SameSite=Strict`;
     }
   }, []);
 
   // Scroll to top on view change, and save state to sessionStorage
   useEffect(() => {
     window.scrollTo(0, 0);
-    sessionStorage.setItem('intelliassess_view', currentView);
+    sessionStorage.setItem('credent_view', currentView);
   }, [currentView]);
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');

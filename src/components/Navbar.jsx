@@ -1,3 +1,14 @@
+/**
+ * ============================================================
+ *  CREDENT — AI Credit Appraisal Engine
+ *  © 2025 Asenra. All Rights Reserved.
+ *  https://asenra.in
+ *
+ *  This source code is the exclusive intellectual property of
+ *  Asenra. Unauthorized reproduction, distribution, or use
+ *  of this code, in whole or in part, is strictly prohibited.
+ * ============================================================
+ */
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Activity, Zap, ShieldCheck } from 'lucide-react';
@@ -30,7 +41,7 @@ export default function Navbar({ currentView, setCurrentView, theme, toggleTheme
         }}>
           <Activity color="var(--teal)" size={18} />
         </div>
-        <span style={{ fontWeight: 800 }}>IntelliAssess</span>
+        <span style={{ fontWeight: 800 }}>Credent</span>
       </motion.div>
 
       <div className="nav-links">

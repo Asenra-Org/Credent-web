@@ -1,9 +1,20 @@
+/**
+ * ============================================================
+ *  CREDENT — AI Credit Appraisal Engine
+ *  © 2025 Asenra. All Rights Reserved.
+ *  https://asenra.in
+ *
+ *  This source code is the exclusive intellectual property of
+ *  Asenra. Unauthorized reproduction, distribution, or use
+ *  of this code, in whole or in part, is strictly prohibited.
+ * ============================================================
+ */
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Database, Search, ShieldCheck, BrainCircuit, Award, BarChart3 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════
-   AnimatedBeamWorkflow — IntelliAssess Pipeline
+   AnimatedBeamWorkflow — Credent Pipeline
    Shows data flowing from sources → AI Engine → outputs
 ═══════════════════════════════════════════════ */
 

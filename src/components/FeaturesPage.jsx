@@ -1,3 +1,14 @@
+/**
+ * ============================================================
+ *  CREDENT — AI Credit Appraisal Engine
+ *  © 2025 Asenra. All Rights Reserved.
+ *  https://asenra.in
+ *
+ *  This source code is the exclusive intellectual property of
+ *  Asenra. Unauthorized reproduction, distribution, or use
+ *  of this code, in whole or in part, is strictly prohibited.
+ * ============================================================
+ */
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Upload, ShieldCheck, Search, BrainCircuit, FileText, History } from 'lucide-react';
@@ -27,7 +38,7 @@ export default function FeaturesPage() {
           ✦ CAPABILITIES
         </motion.div>
         <h2 className="section-title">Enterprise-Grade Capabilities</h2>
-        <p className="section-subtitle">IntelliAssess isn't just a wrapper. It's a multi-agent orchestrated pipeline designed for the complexities of corporate lending.</p>
+        <p className="section-subtitle">Credent isn't just a wrapper. It's a multi-agent orchestrated pipeline designed for the complexities of corporate lending.</p>
       </div>
 
       <div className="features-grid">
