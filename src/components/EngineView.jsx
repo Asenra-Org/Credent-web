@@ -303,11 +303,9 @@ export default function EngineView() {
               color: '#ffffff', 
               display: 'flex', 
               alignItems: 'center', 
-              justifyContent: 'center', 
-              fontWeight: 800, 
-              fontSize: '10px' 
+              justifyContent: 'center'
             }}>
-              KP
+              <User size={12} />
             </div>
           </div>
         </div>

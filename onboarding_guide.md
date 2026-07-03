@@ -75,3 +75,11 @@ To test the full end-to-end integration:
 2. In the browser, upload the test PDF file located in your downloads folder:
    👉 **`C:\Users\kpvlo\Downloads\Asenra_Solar_Power_Financials_FY25.pdf`**
 3. Verify that the table populates with the dynamic financial variables (₹62.00 Cr revenue, ₹15.00 Cr borrowings) and the audit trail generates the corresponding logs.
+
+---
+
+## 📣 Onboarding & Social Actions
+Before starting your technical tasks, please complete the following onboarding actions:
+1. **Connect on LinkedIn**: Connect with our founder (the connection link is pinned in the Slack announcements channel).
+2. **Follow Company Pages**: Follow the Asenra and Credent corporate pages on LinkedIn and Twitter to stay updated.
+3. **Build in Public**: We highly encourage you to share your daily development learnings, screenshots, and progress on LinkedIn and Twitter. Tag the company profiles when posting!
