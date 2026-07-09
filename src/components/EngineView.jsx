@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import { downloadPDF } from '../utils/generatePdf';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const _envUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const API_URL = _envUrl.endsWith('/api/v1') ? _envUrl : `${_envUrl.replace(/\/$/, '')}/api/v1`;
 const api = axios.create({ baseURL: API_URL, timeout: 120000 });
 
 const formatToCr = (val) => {
