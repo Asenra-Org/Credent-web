@@ -11,8 +11,10 @@ import {
   Upload, Loader2, Download, Trash2, CheckCircle2,
   AlertTriangle, FileText, ArrowRight, Server, Shield,
   Terminal, Database, History, User, Clock, LayoutDashboard,
-  Menu, Bell, ChevronRight, Settings, FileSpreadsheet, Lock
+  Menu, Bell, ChevronRight, Settings, FileSpreadsheet, Lock,
+  XCircle, HelpCircle
 } from 'lucide-react';
+
 import { downloadPDF } from '../utils/generatePdf';
 
 const _envUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
@@ -24,6 +26,38 @@ const formatToCr = (val) => {
   const num = Number(val);
   return `₹ ${(num / 10000000).toFixed(2)} Cr`;
 };
+/**
+ * Maps a backend decision string to display styling.
+ * Defensive by design: never trusts the input to be a known value —
+ * always falls back to a safe neutral style rather than throwing
+ * or rendering unstyled/undefined output.
+ */
+const getDecisionStyle = (decision) => {
+  // Defensive: coerce to string first — protects against non-string
+  // values (null, undefined, numbers, objects) reaching .toUpperCase()
+const d = String(decision ?? "")
+  .trim()
+  .toUpperCase();
+
+if (d === "APPROVED" || d === "APPROVE") {
+  return { label: d, bg: "#ecfdf5", border: "#10b981", color: "#10b981", Icon: CheckCircle2 };
+}
+
+if (d === "REJECTED" || d === "REJECT") {
+  return { label: d, bg: "#fff1f2", border: "#ef4444", color: "#ef4444", Icon: XCircle };
+}
+
+if (d === "MANUAL REVIEW" || d === "MANUAL_REVIEW") {
+  return { label: d, bg: "#fffbeb", border: "#d97706", color: "#d97706", Icon: AlertTriangle };
+}
+
+return {
+  label: d || "UNKNOWN",
+  bg: "#f4f6f8",
+  border: "#8a99a8",
+  color: "#8a99a8",
+  Icon: HelpCircle,
+};}
 
 export default function EngineView() {
   const [appStatus, setAppStatus] = useState('idle');
@@ -42,6 +76,7 @@ export default function EngineView() {
   const [currentView, setCurrentView] = useState('terminal');
   
   const logEndRef = useRef(null);
+  const processingLogEndRef = useRef(null);
 
   // Live session clock for institutional workspace feel
   useEffect(() => {
@@ -66,16 +101,25 @@ export default function EngineView() {
     }
   };
 
-  useEffect(() => {
-    fetchHistory();
-  }, [appStatus]);
+useEffect(() => {
+    if (appStatus === "complete") {
+        fetchHistory();
+    }
+}, [appStatus]);
 
-  // Auto-scroll logs
+  // Auto-scroll logs (System Logs tab, post-completion)
   useEffect(() => {
     if (logEndRef.current) {
       logEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [logs]);
+
+  // Auto-scroll logs (live terminal panel shown during processing)
+  useEffect(() => {
+    if (processingLogEndRef.current) {
+      processingLogEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [logs, appStatus]);
 
   const handleFileChange = (e) => {
     if (e.target.files?.[0]) {
@@ -213,7 +257,10 @@ export default function EngineView() {
       setFinalScore(cappedScore);
       setAppStatus('complete');
       addLog('DATABASE', 'Transaction saved. Dual-write sync to cloud DB finalized.');
-      addLog('SYSTEM', `Credit Appraisal Memo successfully finalized. Decision: ${camData.decision}`);
+      addLog(
+    "SYSTEM",
+    `Credit Appraisal Memo successfully finalized. Decision: ${camData?.decision ?? "UNKNOWN"}`
+);
 
     } catch (err) {
       console.error(err);
@@ -239,6 +286,11 @@ export default function EngineView() {
     };
     downloadPDF(record.cam_report, reconstructedParams);
   };
+
+  // Decision styling for the "Last Decision" metric card and the decision action bar.
+  // Only computed when a camReport exists; both render sites fall back to the
+  // neutral/idle look when it doesn't.
+  const decisionStyle = camReport ? getDecisionStyle(camReport.decision) : null;
 
   return (
     <div style={{ 
@@ -426,24 +478,30 @@ export default function EngineView() {
                   </div>
                 </div>
 
-                {/* Card 3: Last Decision Timestamp */}
+                {/* Card 3: Last Decision — dynamically styled via getDecisionStyle() */}
                 <div style={{ 
-                  background: '#ffffff', 
+                  background: decisionStyle ? decisionStyle.bg : '#ffffff', 
                   border: '1px solid #cbd5e1', 
+                  borderLeft: decisionStyle ? `4px solid ${decisionStyle.border}` : '1px solid #cbd5e1',
                   padding: '1.25rem', 
                   textAlign: 'center', 
                   borderRadius: '2px'
                 }}>
                   <div style={{ 
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
                     fontSize: '18px', 
                     fontWeight: 700, 
-                    color: '#1a73e8', 
+                    color: decisionStyle ? decisionStyle.color : '#1a73e8', 
                     fontFamily: 'monospace',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis'
                   }}>
-                    {camReport ? camReport.decision : 'AWAITING PAYLOAD'}
+                    {decisionStyle && <decisionStyle.Icon size={16} />}
+                    <span>{camReport ? decisionStyle.label : 'AWAITING PAYLOAD'}</span>
                   </div>
                   <div style={{ fontSize: '11px', color: '#8a99a8', marginTop: '8px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                     System Decision Recommendation
@@ -550,11 +608,33 @@ export default function EngineView() {
                     </div>
                   )}
 
-                  {/* Processing state */}
+                  {/* Processing state — live-scrolling terminal log panel */}
                   {appStatus === 'processing' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 1rem', gap: '0.75rem' }}>
-                      <Loader2 className="spin" size={28} color="#1a73e8" />
-                      <span style={{ fontWeight: 700, color: '#2c3540', fontFamily: 'monospace' }}>RUNNING PIPELINE AGENTS...</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '1.5rem 1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <Loader2 className="spin" size={22} color="#1a73e8" />
+                        <span style={{ fontWeight: 700, color: '#2c3540', fontFamily: 'monospace' }}>RUNNING PIPELINE AGENTS...</span>
+                      </div>
+                      <div
+                        role="log"
+                        aria-live="polite"
+                        style={{
+                          width: '100%',
+                          background: '#1f262d',
+                          color: '#10b981',
+                          padding: '0.75rem',
+                          fontFamily: 'monospace',
+                          fontSize: '11px',
+                          maxHeight: '260px',
+                          overflowY: 'auto',
+                          borderRadius: '2px'
+                        }}
+                      >
+                        {logs.map((log, idx) => (
+                          <div key={idx} style={{ color: log.includes('FATAL') || log.includes('WARNING') ? '#ef4444' : '#10b981' }}>{log}</div>
+                        ))}
+                        <div ref={processingLogEndRef} />
+                      </div>
                     </div>
                   )}
 
@@ -714,11 +794,17 @@ export default function EngineView() {
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <span style={{ fontSize: '9px', color: '#8a99a8', fontWeight: 700, textTransform: 'uppercase' }}>DECISION</span>
                             <span style={{ 
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
                               fontWeight: 900, 
-                              color: camReport.decision === 'APPROVE' ? '#10b981' : '#ef4444', 
+                              color: decisionStyle.color, 
                               fontSize: '14px',
                               fontFamily: 'monospace'
-                            }}>{camReport.decision}</span>
+                            }}>
+                              <decisionStyle.Icon size={14} />
+                              {decisionStyle.label}
+                            </span>
                           </div>
                           
                           <div style={{ width: '1px', height: '24px', background: '#cbd5e1' }} />
@@ -823,52 +909,61 @@ export default function EngineView() {
                       </tr>
                     </thead>
                     <tbody>
-                      {recentAppraisals.map((record, index) => (
-                        <tr key={index} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                          <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, color: '#2c3540' }}>{record.company_name}</td>
-                          <td style={{ padding: '0.6rem 0.75rem', color: '#506070', fontFamily: 'monospace' }}>{record.sector.toUpperCase()}</td>
-                          <td style={{ padding: '0.6rem 0.75rem', textAlign: 'center', fontWeight: 700, fontFamily: 'monospace' }}>
-                            {record.adjusted_score || record.base_score || 'N/A'}
-                          </td>
-                          <td style={{ padding: '0.6rem 0.75rem', textAlign: 'right', fontWeight: 700, fontFamily: 'monospace', color: '#1a73e8' }}>
-                            {record.recommended_loan_amount}
-                          </td>
-                          <td style={{ padding: '0.6rem 0.75rem', textAlign: 'right', fontWeight: 700, fontFamily: 'monospace' }}>
-                            {record.recommended_interest_rate}
-                          </td>
-                          <td style={{ padding: '0.6rem 0.75rem', textAlign: 'center' }}>
-                            <span style={{ 
-                              padding: '2px 6px',
-                              borderRadius: '2px',
-                              fontWeight: 800,
-                              fontSize: '10px',
-                              fontFamily: 'monospace',
-                              background: record.decision === 'APPROVE' ? '#ecfdf5' : '#fff1f2',
-                              color: record.decision === 'APPROVE' ? '#10b981' : '#ef4444'
-                            }}>{record.decision}</span>
-                          </td>
-                          <td style={{ padding: '0.6rem 0.75rem', textAlign: 'right' }}>
-                            <button 
-                              onClick={() => handleDownloadHistoricalPDF(record)}
-                              disabled={!record.cam_report}
-                              style={{ 
-                                background: 'none', 
-                                border: 'none', 
-                                color: record.cam_report ? '#1a73e8' : '#cbd5e1', 
-                                cursor: record.cam_report ? 'pointer' : 'not-allowed', 
+                      {recentAppraisals.map((record, index) => {
+                        const rowDecisionStyle = getDecisionStyle(record.decision);
+                        return (
+                          <tr key={index} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, color: '#2c3540' }}>{record.company_name}</td>
+                            <td style={{ padding: '0.6rem 0.75rem', color: '#506070', fontFamily: 'monospace' }}>{(record.sector ?? "UNKNOWN").toUpperCase()}</td>
+                            <td style={{ padding: '0.6rem 0.75rem', textAlign: 'center', fontWeight: 700, fontFamily: 'monospace' }}>
+                              {record.adjusted_score || record.base_score || 'N/A'}
+                            </td>
+                            <td style={{ padding: '0.6rem 0.75rem', textAlign: 'right', fontWeight: 700, fontFamily: 'monospace', color: '#1a73e8' }}>
+                              {record.recommended_loan_amount}
+                            </td>
+                            <td style={{ padding: '0.6rem 0.75rem', textAlign: 'right', fontWeight: 700, fontFamily: 'monospace' }}>
+                              {record.recommended_interest_rate}
+                            </td>
+                            <td style={{ padding: '0.6rem 0.75rem', textAlign: 'center' }}>
+                              <span style={{ 
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '4px',
-                                fontSize: '11px',
-                                fontWeight: 700
-                              }}
-                            >
-                              <Download size={12} />
-                              <span>PDF</span>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                                padding: '2px 6px',
+                                borderRadius: '2px',
+                                fontWeight: 800,
+                                fontSize: '10px',
+                                fontFamily: 'monospace',
+                                background: rowDecisionStyle.bg,
+                                color: rowDecisionStyle.color
+                              }}>
+                                <rowDecisionStyle.Icon size={11} />
+                                {rowDecisionStyle.label}
+                              </span>
+                            </td>
+                            <td style={{ padding: '0.6rem 0.75rem', textAlign: 'right' }}>
+                              <button 
+                                onClick={() => handleDownloadHistoricalPDF(record)}
+                                disabled={!record.cam_report}
+                                style={{ 
+                                  background: 'none', 
+                                  border: 'none', 
+                                  color: record.cam_report ? '#1a73e8' : '#cbd5e1', 
+                                  cursor: record.cam_report ? 'pointer' : 'not-allowed', 
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  fontSize: '11px',
+                                  fontWeight: 700
+                                }}
+                              >
+                                <Download size={12} />
+                                <span>PDF</span>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 ) : (
