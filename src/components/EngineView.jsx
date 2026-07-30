@@ -163,8 +163,8 @@ useEffect(() => {
       setLogs(prev => [...prev, `[${timestamp}] ${tag}: ${msg}`]);
     };
 
-    addLog('SYSTEM', 'Initializing multi-agent underwriting transaction.');
-    addLog('INGEST', `Uploading document "${file.name}" to ingestion agent...`);
+    addLog('SYSTEM', 'Starting appraisal pipeline.');
+    addLog('INGEST', `Uploading "${file.name}"...`);
 
     try {
       const fd = new FormData(); 
@@ -188,13 +188,12 @@ useEffect(() => {
         worth: pdfData.shareholder_equity
       });
 
-      addLog('INGEST', `Dossier parsing complete. Identified entity: "${pdfData.company_name || 'Unknown'}"`);
-      addLog('FORENSICS', `Structure integrity scan complete. Suspicious=${forensicsData.is_suspicious ? 'TRUE' : 'FALSE'}`);
+      addLog('INGEST', `Document parsed. Entity: ${pdfData.company_name || 'Unknown'}`);
+      addLog('FORENSICS', forensicsData.is_suspicious ? 'Integrity scan completed. Suspicious activity detected.' : 'Integrity scan completed. No suspicious activity detected.');
       if (forensicsData.is_suspicious) {
-        addLog('FORENSICS', `WARNING: Metadata discrepancies detected: ${forensicsData.flags.join(', ')}`);
-      }
+addLog('FORENSICS', `WARNING: Metadata issues detected: ${forensicsData.flags.join(', ')}`);      }
 
-      addLog('INTEGRITY', 'Starting cross-ledger GST vs Bank Statement validation...');
+      addLog('INTEGRITY', 'Validating GST and bank records.');
       let integrityData = { status: "completed", gst_match_rate: "98.4%", flags_detected: 0, flags: [] };
       try {
         const monthlyExpected = (pdfData.total_revenue || 60000000) / 12;
@@ -203,12 +202,12 @@ useEffect(() => {
           bank_data: [{ amount: Math.round(monthlyExpected * 0.97) }]
         });
         integrityData = res2.data;
-        addLog('INTEGRITY', `Validation finished. Taxable turnover correlation verified at ${integrityData.gst_match_rate || '98.4%'}`);
+        addLog('INTEGRITY', `Validation completed. Turnover match: ${integrityData.gst_match_rate || '98.4%'}`);
       } catch (err) {
-        addLog('INTEGRITY', 'Bypass: GST verification module unreachable, utilizing default compliance heuristics.');
+        addLog('INTEGRITY', 'WARNING: GST verification unavailable. Using default checks.');
       }
 
-      addLog('OSINT', 'Scraping Ministry of Corporate Affairs (MCA) and public court indexes...');
+      addLog('OSINT', 'Checking MCA and public court records.');
       let researchData = { company_news: [], sector_headwinds: [], litigation_signals: [] };
       try {
         const res3 = await api.post('research/web-research', {
@@ -216,12 +215,11 @@ useEffect(() => {
           sector: pdfData.sector
         });
         researchData = res3.data?.data || researchData;
-        addLog('OSINT', `Indexes parsed. Sector headwinds risk weight: ${researchData.sector_headwinds?.length || 0} alerts, litigation score: CLEAR`);
+        addLog('OSINT', `${researchData.sector_headwinds?.length || 0} sector alerts found. Litigation status: Clear.`);
       } catch (err) {
-        addLog('OSINT', 'Bypass: External OSINT registry timeout. Defaulting to clear history.');
-      }
+          addLog('OSINT', 'WARNING: OSINT service unavailable. Using default results.');      }
 
-      addLog('RISK', `Calculating qualitative risk offsets. Base Score: ${pdfData.base_score || 50}/100`);
+      addLog('RISK', `Calculating risk score. Base: ${pdfData.base_score || 50}/100`);
       let cappedScore = pdfData.base_score || 50;
       try {
         const res4 = await api.post('research/adjust-score', {
@@ -229,12 +227,12 @@ useEffect(() => {
           qualitative_notes: pdfData.qualitative_notes
         });
         cappedScore = res4.data?.data?.adjusted_score || pdfData.base_score || 50;
-        addLog('RISK', `Appraisal score weighted and finalized. Capped Risk Score: ${cappedScore}/100`);
+        addLog('RISK', `Risk score finalized: ${cappedScore}/100`);
       } catch (err) {
-        addLog('RISK', 'Qualitative weighting service skipped. Using base score.');
+        addLog('RISK', 'Using base risk score.');
       }
 
-      addLog('ORCHESTRATION', 'Synthesizing Credit Appraisal Memo (CAM) & underwriting recommendations...');
+      addLog('ORCHESTRATION', 'Generating Credit Appraisal Memo.');
       const res5 = await api.post('reports/generate-cam', {
         extracted_pdf_data: pdfData,
         integrity_flags: {
@@ -256,18 +254,22 @@ useEffect(() => {
       });
       setFinalScore(cappedScore);
       setAppStatus('complete');
-      addLog('DATABASE', 'Transaction saved. Dual-write sync to cloud DB finalized.');
+      addLog('DATABASE', 'Results saved successfully.');
       addLog(
     "SYSTEM",
-    `Credit Appraisal Memo successfully finalized. Decision: ${camData?.decision ?? "UNKNOWN"}`
+    `CAM generated. Decision: ${camData?.decision ?? "UNKNOWN"}`
 );
 
     } catch (err) {
-      console.error(err);
-      setErrorMessage(err.message || 'Underwriting pipeline failed.');
-      setAppStatus('failed');
-      addLog('SYSTEM', `FATAL: Appraisal pipeline aborted. Reason: ${err.message || 'Unknown network error'}`);
-    }
+  console.error(err);
+  setErrorMessage(err.message || 'Underwriting pipeline failed.');
+  setAppStatus('failed');
+
+  addLog(
+    'SYSTEM',
+    `FATAL: Pipeline failed. Reason: ${err.message || 'Unknown error'}`
+  );
+}
   };
 
   const handleDownloadPDF = () => {
