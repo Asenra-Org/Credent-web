@@ -70,6 +70,7 @@ export default function EngineView() {
   const [errorMessage, setErrorMessage] = useState('');
   const [activeTab, setActiveTab] = useState('CREDIT APPRAISAL');
   const [logs, setLogs] = useState([]);
+  const [progress, setProgress] = useState(0);
   const [recentAppraisals, setRecentAppraisals] = useState([]);
   const [sessionTime, setSessionTime] = useState('');
   
@@ -184,6 +185,7 @@ useEffect(() => {
     setCamReport(null);
     setDetectedParams(null);
     setForensicsReport(null);
+    setProgress(0);
 
     const addLog = (tag, msg) => {
       const timestamp = new Date().toLocaleTimeString();
@@ -191,6 +193,7 @@ useEffect(() => {
     };
 
     addLog('SYSTEM', 'Starting appraisal pipeline.');
+    setProgress(10);
     addLog('INGEST', `Uploading "${file.name}"...`);
 
     try {
@@ -218,7 +221,9 @@ useEffect(() => {
       addLog('INGEST', `Document parsed. Entity: ${pdfData.company_name || 'Unknown'}`);
       addLog('FORENSICS', forensicsData.is_suspicious ? 'Integrity scan completed. Suspicious activity detected.' : 'Integrity scan completed. No suspicious activity detected.');
       if (forensicsData.is_suspicious) {
-addLog('FORENSICS', `WARNING: Metadata issues detected: ${forensicsData.flags.join(', ')}`);      }
+        addLog('FORENSICS', `WARNING: Metadata issues detected: ${forensicsData.flags.join(', ')}`);
+      }
+      setProgress(40);
 
       addLog('INTEGRITY', 'Validating GST and bank records.');
       let integrityData = { status: "completed", gst_match_rate: "98.4%", flags_detected: 0, flags: [] };
@@ -233,6 +238,7 @@ addLog('FORENSICS', `WARNING: Metadata issues detected: ${forensicsData.flags.jo
       } catch (err) {
         addLog('INTEGRITY', 'WARNING: GST verification unavailable. Using default checks.');
       }
+      setProgress(60);
 
       addLog('OSINT', 'Checking MCA and public court records.');
       let researchData = { company_news: [], sector_headwinds: [], litigation_signals: [] };
@@ -244,7 +250,9 @@ addLog('FORENSICS', `WARNING: Metadata issues detected: ${forensicsData.flags.jo
         researchData = res3.data?.data || researchData;
         addLog('OSINT', `${researchData.sector_headwinds?.length || 0} sector alerts found. Litigation status: Clear.`);
       } catch (err) {
-          addLog('OSINT', 'WARNING: OSINT service unavailable. Using default results.');      }
+        addLog('OSINT', 'WARNING: OSINT service unavailable. Using default results.');
+      }
+      setProgress(80);
 
       addLog('RISK', `Calculating risk score. Base: ${pdfData.base_score || 50}/100`);
       let cappedScore = pdfData.base_score || 50;
@@ -280,6 +288,7 @@ addLog('FORENSICS', `WARNING: Metadata issues detected: ${forensicsData.flags.jo
         decision_rationale: camData.decision_rationale || 'Analysis complete.'
       });
       setFinalScore(cappedScore);
+      setProgress(100);
       setAppStatus('complete');
       addLog('DATABASE', 'Results saved successfully.');
       addLog(
@@ -484,7 +493,11 @@ addLog('FORENSICS', `WARNING: Metadata issues detected: ${forensicsData.flags.jo
                   borderRadius: '2px'
                 }}>
                   <div style={{ fontSize: '24px', fontWeight: 700, color: '#0d213f', fontFamily: 'monospace' }}>
-                    {detectedParams ? finalScore : '00'}
+                    {appStatus === 'processing' ? (
+                      <div className="skeleton skeleton-heading"></div>
+                    ) : (
+                      detectedParams ? finalScore : '00'
+                    )}
                   </div>
                   <div style={{ fontSize: '11px', color: '#8a99a8', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                     Risk appraisal score
@@ -500,7 +513,11 @@ addLog('FORENSICS', `WARNING: Metadata issues detected: ${forensicsData.flags.jo
                   borderRadius: '2px'
                 }}>
                   <div style={{ fontSize: '24px', fontWeight: 700, color: '#0d213f', fontFamily: 'monospace' }}>
-                    {detectedParams ? formatToCr(detectedParams.revenue) : '₹ 0.00 Cr'}
+                    {appStatus === 'processing' ? (
+                      <div className="skeleton skeleton-heading"></div>
+                    ) : (
+                      detectedParams ? formatToCr(detectedParams.revenue) : '₹ 0.00 Cr'
+                    )}
                   </div>
                   <div style={{ fontSize: '11px', color: '#8a99a8', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                     Annual Turnover Match
@@ -529,8 +546,14 @@ addLog('FORENSICS', `WARNING: Metadata issues detected: ${forensicsData.flags.jo
                     overflowY: 'auto',
                     textOverflow: 'ellipsis'
                   }}>
-                    {decisionStyle && <decisionStyle.Icon size={16} />}
-                    <span>{camReport ? decisionStyle.label : 'AWAITING PAYLOAD'}</span>
+                    {appStatus === 'processing' ? (
+                      <div className="skeleton skeleton-heading" style={{ width: '80%', height: '20px' }}></div>
+                    ) : (
+                      <>
+                        {decisionStyle && <decisionStyle.Icon size={16} />}
+                        <span>{camReport ? decisionStyle.label : 'AWAITING PAYLOAD'}</span>
+                      </>
+                    )}
                   </div>
                   <div style={{ fontSize: '11px', color: '#8a99a8', marginTop: '8px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                     System Decision Recommendation
@@ -650,6 +673,12 @@ addLog('FORENSICS', `WARNING: Metadata issues detected: ${forensicsData.flags.jo
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                         <Loader2 className="spin" size={22} color="#0d213f" />
                         <span style={{ fontWeight: 700, color: '#2c3540', fontFamily: 'monospace' }}>RUNNING PIPELINE AGENTS...</span>
+                      </div>
+                      <div className="progress-container" style={{ width: '80%' }}>
+                        <div className="progress-bar" style={{ width: `${progress}%` }}></div>
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#8a99a8', fontWeight: 600, fontFamily: 'monospace' }}>
+                        {progress}% COMPLETE
                       </div>
                       <div
                         role="log"
