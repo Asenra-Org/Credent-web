@@ -257,7 +257,7 @@ export default function ManagerDashboard({ theme, onExit }) {
                       </td>
                       <td style={{ padding: '1rem 1.5rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '40px', height: '4px', background: 'var(--border-default)', borderRadius: '2px', overflow: 'hidden' }}>
+                          <div style={{ width: '40px', height: '4px', background: 'var(--border-default)', borderRadius: '2px', overflowY: 'auto' }}>
                             <div style={{ height: '100%', width: `${app.adjusted_score}%`, background: getStatusColor(app.decision) }} />
                           </div>
                           <span style={{ fontWeight: '800' }}>{app.adjusted_score}</span>

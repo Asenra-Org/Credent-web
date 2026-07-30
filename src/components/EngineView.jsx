@@ -62,6 +62,7 @@ return {
 export default function EngineView() {
   const [appStatus, setAppStatus] = useState('idle');
   const [file, setFile] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [detectedParams, setDetectedParams] = useState(null);
   const [forensicsReport, setForensicsReport] = useState(null);
   const [camReport, setCamReport] = useState(null);
@@ -121,9 +122,34 @@ useEffect(() => {
     }
   }, [logs, appStatus]);
 
+  
   const handleFileChange = (e) => {
-    if (e.target.files?.[0]) {
-      const selected = e.target.files[0];
+    handleSelectedFile(e.target.files?.[0]);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleSelectedFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleSelectedFile = (selected) => {
+    if (selected) {
       setFile(selected);
       setDetectedParams(null);
       setCamReport(null);
@@ -138,6 +164,7 @@ useEffect(() => {
       ]);
     }
   };
+
 
   const resetState = () => {
     setFile(null);
@@ -294,7 +321,7 @@ useEffect(() => {
 
   return (
     <div style={{ 
-      minHeight: '100vh', 
+      height: '100vh', 
       background: '#eaedf1', 
       display: 'flex', 
       flexDirection: 'column', 
@@ -311,7 +338,7 @@ useEffect(() => {
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center',
-        borderBottom: '1px solid #1f262d',
+        borderBottom: '1px solid var(--border-light)',
         flexShrink: 0
       }}>
         {/* Left Brand Header (Background: #222a33, width matches sidebar) */}
@@ -326,24 +353,24 @@ useEffect(() => {
           fontWeight: 700,
           fontSize: '14px',
           letterSpacing: '0.02em',
-          borderRight: '1px solid #1f262d'
+          borderRight: '1px solid var(--border-light)'
         }}>
-          <Shield size={16} color="#1a73e8" />
-          <span>Credent</span>
+          <img src="/logo.jpg" alt="Credent Logo" style={{ height: '24px', width: '24px', borderRadius: '4px', objectFit: 'cover' }} />
+          <span style={{ fontSize: '15px' }}>Credent</span>
         </div>
         
         {/* Middle Header Section */}
         <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '1rem', flex: 1 }}>
           <Menu size={20} style={{ cursor: 'pointer', color: '#8a99a8' }} />
           <span style={{ marginLeft: '1rem', fontSize: '11px', color: '#8a99a8', fontFamily: 'monospace' }}>
-            NODE: SECURE [ENV: PROD_INTRADAY]
+            
           </span>
         </div>
 
         {/* Right Header Section */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', paddingRight: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '11px', color: '#8a99a8', fontFamily: 'monospace' }}>
-            <Clock size={12} color="#1a73e8" />
+            <Clock size={12} color="#0d213f" />
             <span>{sessionTime || '0000-00-00 00:00:00 UTC'}</span>
           </div>
           <Bell size={16} style={{ color: '#8a99a8', cursor: 'pointer' }} />
@@ -352,7 +379,7 @@ useEffect(() => {
               width: '24px', 
               height: '24px', 
               borderRadius: '50%', 
-              background: '#1a73e8', 
+              background: '#0d213f', 
               color: '#ffffff', 
               display: 'flex', 
               alignItems: 'center', 
@@ -368,13 +395,13 @@ useEffect(() => {
       <div style={{ 
         flex: 1, 
         display: 'flex', 
-        overflow: 'hidden' 
+        overflowY: 'auto' 
       }}>
         
         {/* LEFT SIDEBAR (Background: #ffffff) */}
         <aside style={{ 
           width: '230px', 
-          background: '#ffffff', 
+          background: '#ffffff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
           borderRight: '1px solid #e2e8f0', 
           display: 'flex', 
           flexDirection: 'column',
@@ -391,9 +418,9 @@ useEffect(() => {
                 justifyContent: 'space-between',
                 padding: '0.6rem 1.25rem', 
                 background: currentView === 'terminal' ? '#f4f6f8' : 'transparent', 
-                color: currentView === 'terminal' ? '#1a73e8' : '#506070', 
+                color: currentView === 'terminal' ? '#0d213f' : '#506070', 
                 fontWeight: currentView === 'terminal' ? 600 : 400,
-                borderLeft: currentView === 'terminal' ? '3px solid #1a73e8' : '3px solid transparent',
+                borderLeft: currentView === 'terminal' ? '3px solid #0d213f' : '3px solid transparent',
                 cursor: 'pointer'
               }}
             >
@@ -412,9 +439,9 @@ useEffect(() => {
                 justifyContent: 'space-between',
                 padding: '0.6rem 1.25rem', 
                 background: currentView === 'history' ? '#f4f6f8' : 'transparent', 
-                color: currentView === 'history' ? '#1a73e8' : '#506070', 
+                color: currentView === 'history' ? '#0d213f' : '#506070', 
                 fontWeight: currentView === 'history' ? 600 : 400,
-                borderLeft: currentView === 'history' ? '3px solid #1a73e8' : '3px solid transparent',
+                borderLeft: currentView === 'history' ? '3px solid #0d213f' : '3px solid transparent',
                 cursor: 'pointer'
               }}
             >
@@ -448,13 +475,13 @@ useEffect(() => {
               }}>
                 {/* Card 1: Risk Appraisal Score */}
                 <div style={{ 
-                  background: '#ffffff', 
+                  background: '#ffffff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
                   border: '1px solid #cbd5e1', 
                   padding: '1.25rem', 
                   textAlign: 'center', 
                   borderRadius: '2px'
                 }}>
-                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#1a73e8', fontFamily: 'monospace' }}>
+                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#0d213f', fontFamily: 'monospace' }}>
                     {detectedParams ? finalScore : '00'}
                   </div>
                   <div style={{ fontSize: '11px', color: '#8a99a8', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
@@ -464,13 +491,13 @@ useEffect(() => {
 
                 {/* Card 2: Extracted Revenue */}
                 <div style={{ 
-                  background: '#ffffff', 
+                  background: '#ffffff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
                   border: '1px solid #cbd5e1', 
                   padding: '1.25rem', 
                   textAlign: 'center', 
                   borderRadius: '2px'
                 }}>
-                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#1a73e8', fontFamily: 'monospace' }}>
+                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#0d213f', fontFamily: 'monospace' }}>
                     {detectedParams ? formatToCr(detectedParams.revenue) : '₹ 0.00 Cr'}
                   </div>
                   <div style={{ fontSize: '11px', color: '#8a99a8', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
@@ -494,10 +521,10 @@ useEffect(() => {
                     gap: '6px',
                     fontSize: '18px', 
                     fontWeight: 700, 
-                    color: decisionStyle ? decisionStyle.color : '#1a73e8', 
+                    color: decisionStyle ? decisionStyle.color : '#0d213f', 
                     fontFamily: 'monospace',
                     whiteSpace: 'nowrap',
-                    overflow: 'hidden',
+                    overflowY: 'auto',
                     textOverflow: 'ellipsis'
                   }}>
                     {decisionStyle && <decisionStyle.Icon size={16} />}
@@ -511,7 +538,7 @@ useEffect(() => {
 
               {/* MAIN CONTAINER (DARK HEADER BANNER + TABLE CARD) */}
               <div style={{ 
-                background: '#ffffff', 
+                background: '#ffffff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
                 border: '1px solid #cbd5e1', 
                 borderRadius: '2px', 
                 display: 'flex', 
@@ -523,7 +550,7 @@ useEffect(() => {
                   background: '#2c3540', 
                   color: '#ffffff', 
                   padding: '0.75rem 1.25rem', 
-                  borderBottom: '1px solid #1f262d'
+                  borderBottom: '1px solid var(--border-light)'
                 }}>
                   <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                     {appStatus === 'complete' ? 'UNDERWRITING ANALYSIS RESULTS' : 'APPRAISAL DOSSIER INGESTION'}
@@ -540,21 +567,28 @@ useEffect(() => {
                   
                   {/* Idle State: show File Ingestion Upload */}
                   {appStatus === 'idle' && (
-                    <div style={{ 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      padding: '3rem 1.5rem',
-                      border: '1px dashed #cbd5e1',
-                      background: '#f8fafc',
-                      textAlign: 'center'
-                    }}>
+                    <div 
+                      onDragEnter={handleDragOver}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        padding: '3rem 1.5rem',
+                        border: isDragging ? '2px dashed #0d213f' : '1px dashed #cbd5e1',
+                        background: isDragging ? '#eef2ff' : '#f8fafc',
+                        textAlign: 'center',
+                        transition: 'all 0.2s ease',
+                        cursor: 'pointer'
+                      }}>
                       <Upload size={32} color="#8a99a8" style={{ marginBottom: '0.75rem' }} />
                       
                       {!file ? (
                         <label style={{ cursor: 'pointer' }}>
-                          <span style={{ fontWeight: 700, color: '#1a73e8', textDecoration: 'underline' }}>Click here to upload financial statement PDF</span>
+                          <span style={{ fontWeight: 700, color: '#0d213f', textDecoration: 'underline' }}>Click here to upload financial statement PDF</span>
                           <div style={{ fontSize: '11px', color: '#8a99a8', marginTop: '4px' }}>Audited balance sheets, GSTR or profit logs</div>
                           <input type="file" accept=".pdf" style={{ display: 'none' }} onChange={handleFileChange} />
                         </label>
@@ -564,17 +598,17 @@ useEffect(() => {
                             display: 'flex', 
                             alignItems: 'center', 
                             gap: '6px', 
-                            background: '#ffffff', 
+                            background: '#ffffff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
                             padding: '0.5rem', 
                             border: '1px solid #cbd5e1',
                             width: '100%' 
                           }}>
-                            <FileText size={16} color="#1a73e8" style={{ flexShrink: 0 }} />
+                            <FileText size={16} color="#0d213f" style={{ flexShrink: 0 }} />
                             <span style={{ 
                               fontWeight: 600, 
                               color: '#2c3540', 
                               whiteSpace: 'nowrap', 
-                              overflow: 'hidden', 
+                              overflowY: 'auto', 
                               textOverflow: 'ellipsis', 
                               flex: 1,
                               fontFamily: 'monospace',
@@ -588,7 +622,7 @@ useEffect(() => {
                           <button 
                             onClick={runUnderwritingPipeline}
                             style={{ 
-                              background: '#1a73e8', 
+                              background: '#0d213f', 
                               color: '#ffffff', 
                               border: 'none', 
                               padding: '0.5rem 1.25rem', 
@@ -612,7 +646,7 @@ useEffect(() => {
                   {appStatus === 'processing' && (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '1.5rem 1rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <Loader2 className="spin" size={22} color="#1a73e8" />
+                        <Loader2 className="spin" size={22} color="#0d213f" />
                         <span style={{ fontWeight: 700, color: '#2c3540', fontFamily: 'monospace' }}>RUNNING PIPELINE AGENTS...</span>
                       </div>
                       <div
@@ -644,7 +678,7 @@ useEffect(() => {
                       <AlertTriangle size={28} />
                       <span style={{ fontWeight: 800 }}>TRANSACTION ERROR DECLARED</span>
                       <p style={{ color: '#8a99a8', fontSize: '11px', textAlign: 'center', margin: 0, fontFamily: 'monospace' }}>{errorMessage}</p>
-                      <button onClick={resetState} style={{ marginTop: '0.5rem', background: '#1a73e8', color: '#ffffff', border: 'none', padding: '0.4rem 1rem', cursor: 'pointer', borderRadius: '2px', fontWeight: 600 }}>
+                      <button onClick={resetState} style={{ marginTop: '0.5rem', background: '#0d213f', color: '#ffffff', border: 'none', padding: '0.4rem 1rem', cursor: 'pointer', borderRadius: '2px', fontWeight: 600 }}>
                         Retry Ingestion
                       </button>
                     </div>
@@ -664,10 +698,10 @@ useEffect(() => {
                               padding: '0.5rem 1rem', 
                               background: 'none', 
                               border: 'none', 
-                              borderBottom: activeTab === tab ? '2px solid #1a73e8' : '2px solid transparent', 
+                              borderBottom: activeTab === tab ? '2px solid #0d213f' : '2px solid transparent', 
                               fontSize: '11px', 
                               fontWeight: 700, 
-                              color: activeTab === tab ? '#1a73e8' : '#8a99a8', 
+                              color: activeTab === tab ? '#0d213f' : '#8a99a8', 
                               cursor: 'pointer',
                               textTransform: 'uppercase',
                               letterSpacing: '0.03em',
@@ -717,18 +751,18 @@ useEffect(() => {
                             <tbody>
                               <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600 }}>Total Revenue (GSTR Correlation)</td>
-                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 700, textAlign: 'right', fontFamily: 'monospace', color: '#1a73e8' }}>{formatToCr(detectedParams.revenue)}</td>
+                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 700, textAlign: 'right', fontFamily: 'monospace', color: '#0d213f' }}>{formatToCr(detectedParams.revenue)}</td>
                                 <td style={{ padding: '0.6rem 0.75rem', color: '#10b981', fontWeight: 700, textAlign: 'right', fontFamily: 'monospace' }}>VERIFIED</td>
                               </tr>
                               <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600 }}>Total Financial Borrowings (Bank Ledger)</td>
-                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 700, textAlign: 'right', fontFamily: 'monospace', color: '#1a73e8' }}>{formatToCr(detectedParams.debt)}</td>
+                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 700, textAlign: 'right', fontFamily: 'monospace', color: '#0d213f' }}>{formatToCr(detectedParams.debt)}</td>
                                 <td style={{ padding: '0.6rem 0.75rem', color: '#10b981', fontWeight: 700, textAlign: 'right', fontFamily: 'monospace' }}>VERIFIED</td>
                               </tr>
                               <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600 }}>Shareholder Net Worth</td>
-                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 700, textAlign: 'right', fontFamily: 'monospace', color: '#1a73e8' }}>{formatToCr(detectedParams.worth)}</td>
-                                <td style={{ padding: '0.6rem 0.75rem', color: '#1a73e8', fontWeight: 700, textAlign: 'right', fontFamily: 'monospace' }}>EXTRACTED</td>
+                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 700, textAlign: 'right', fontFamily: 'monospace', color: '#0d213f' }}>{formatToCr(detectedParams.worth)}</td>
+                                <td style={{ padding: '0.6rem 0.75rem', color: '#0d213f', fontWeight: 700, textAlign: 'right', fontFamily: 'monospace' }}>EXTRACTED</td>
                               </tr>
                             </tbody>
                           </table>
@@ -826,7 +860,7 @@ useEffect(() => {
                           <button 
                             onClick={handleDownloadPDF}
                             style={{ 
-                              background: '#1a73e8', 
+                              background: '#0d213f', 
                               color: '#ffffff', 
                               border: 'none', 
                               padding: '0.5rem 1.5rem', 
@@ -837,7 +871,7 @@ useEffect(() => {
                               transition: 'background 0.15s'
                             }}
                             onMouseEnter={(e) => e.currentTarget.style.background = '#155cb0'}
-                            onMouseLeave={(e) => e.currentTarget.style.background = '#1a73e8'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#0d213f'}
                           >
                             All Transactions & Appraisal Memo PDF
                           </button>
@@ -845,7 +879,7 @@ useEffect(() => {
                           <button 
                             onClick={resetState}
                             style={{ 
-                              background: '#ffffff', 
+                              background: '#ffffff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
                               color: '#506070', 
                               border: '1px solid #cbd5e1', 
                               padding: '0.5rem 1rem', 
@@ -871,7 +905,7 @@ useEffect(() => {
           {/* VIEW B: APPRAISAL HISTORY ARCHIVE */}
           {currentView === 'history' && (
             <div style={{ 
-              background: '#ffffff', 
+              background: '#ffffff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
               border: '1px solid #cbd5e1', 
               borderRadius: '2px', 
               display: 'flex', 
@@ -883,7 +917,7 @@ useEffect(() => {
                 background: '#2c3540', 
                 color: '#ffffff', 
                 padding: '0.75rem 1.25rem', 
-                borderBottom: '1px solid #1f262d'
+                borderBottom: '1px solid var(--border-light)'
               }}>
                 <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                   APPRAISAL RECORDS ARCHIVE
@@ -918,7 +952,7 @@ useEffect(() => {
                             <td style={{ padding: '0.6rem 0.75rem', textAlign: 'center', fontWeight: 700, fontFamily: 'monospace' }}>
                               {record.adjusted_score || record.base_score || 'N/A'}
                             </td>
-                            <td style={{ padding: '0.6rem 0.75rem', textAlign: 'right', fontWeight: 700, fontFamily: 'monospace', color: '#1a73e8' }}>
+                            <td style={{ padding: '0.6rem 0.75rem', textAlign: 'right', fontWeight: 700, fontFamily: 'monospace', color: '#0d213f' }}>
                               {record.recommended_loan_amount}
                             </td>
                             <td style={{ padding: '0.6rem 0.75rem', textAlign: 'right', fontWeight: 700, fontFamily: 'monospace' }}>
@@ -948,7 +982,7 @@ useEffect(() => {
                                 style={{ 
                                   background: 'none', 
                                   border: 'none', 
-                                  color: record.cam_report ? '#1a73e8' : '#cbd5e1', 
+                                  color: record.cam_report ? '#0d213f' : '#cbd5e1', 
                                   cursor: record.cam_report ? 'pointer' : 'not-allowed', 
                                   display: 'inline-flex',
                                   alignItems: 'center',
