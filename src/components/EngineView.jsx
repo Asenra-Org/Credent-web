@@ -761,7 +761,7 @@ useEffect(() => {
                                 <tr key={key} style={{ borderBottom: '1px solid #f1f5f9' }}>
                                   <td style={{ padding: '0.6rem 0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#2c3540', fontFamily: 'monospace', width: '150px' }}>{key}</td>
                                   <td style={{ padding: '0.6rem 0.75rem', color: '#506070', lineHeight: '1.4' }}>
-                                    {typeof val === 'string' ? val : val.assessment}
+                                    {typeof val === 'string' ? val : (val.text || val.assessment)}
                                   </td>
                                 </tr>
                               ))}
