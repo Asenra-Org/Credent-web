@@ -31,6 +31,9 @@ import {
   Zap
 } from 'lucide-react';
 
+const _envUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE_URL = _envUrl.endsWith('/api/v1') ? _envUrl : `${_envUrl.replace(/\/$/, '')}/api/v1`;
+
 export default function ManagerDashboard({ theme, onExit }) {
   const [appraisals, setAppraisals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +50,7 @@ export default function ManagerDashboard({ theme, onExit }) {
 
   const fetchAppraisals = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/v1/history/recent?limit=50');
+      const response = await fetch(`${API_BASE_URL}/history/recent?limit=50`);
       const result = await response.json();
       if (result.status === 'success') {
         setAppraisals(result.data);
@@ -60,13 +63,33 @@ export default function ManagerDashboard({ theme, onExit }) {
   };
 
   const handleUpdateStatus = async (appId, newDecision) => {
-    if (!appId) {
-        alert(" Error: Invalid Application ID. Sync Failed.");
-        return;
+    if (!appId || updating) return;
+
+    // Find and backup ONLY the single affected appraisal object for memory efficiency
+    const targetItem = appraisals.find(app => app.id === appId || app.appraisal_id === appId);
+    if (!targetItem) {
+      alert("Error: Application record not found. Sync Failed.");
+      return;
     }
+
+    const previousItem = { ...targetItem };
+    const isDrawerTarget = selectedAppraisal && (selectedAppraisal.id === appId || selectedAppraisal.appraisal_id === appId);
+    const previousDrawerItem = isDrawerTarget ? { ...selectedAppraisal } : null;
+
+    // 1. Instant Optimistic Local State Mutation (0ms UI lag, single item update)
+    setAppraisals(prev => prev.map(item => {
+      const id = item.id || item.appraisal_id;
+      return id === appId ? { ...item, decision: newDecision, status: newDecision } : item;
+    }));
+
+    if (isDrawerTarget) {
+      setSelectedAppraisal(prev => prev ? { ...prev, decision: newDecision, status: newDecision } : null);
+    }
+
     setUpdating(true);
+
     try {
-      const resp = await fetch(`http://localhost:8000/api/v1/reports/update-status/${appId}`, {
+      const resp = await fetch(`${API_BASE_URL}/reports/update-status/${appId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -74,13 +97,32 @@ export default function ManagerDashboard({ theme, onExit }) {
           rationale: `Formal institutional decision by bank manager. Date: ${new Date().toLocaleString()}`
         })
       });
-      const result = await resp.json();
-      if (result.status === 'success') {
-        fetchAppraisals(); // Refresh cloud data
-        setSelectedAppraisal(null); // Close modal/detail
+
+      if (!resp.ok) {
+        throw new Error(`HTTP Error ${resp.status}: ${resp.statusText}`);
       }
+
+      const result = await resp.json();
+
+      if (result.status !== 'success') {
+        throw new Error(result.message || 'Server rejected status update');
+      }
+
+      // Success: Close drawer cleanly after decision override (matching original UX intent)
+      setSelectedAppraisal(null);
     } catch (err) {
       console.error("Cloud Decision Sync failed:", err);
+      // 2. Rollback ONLY the single affected item and drawer state on error
+      setAppraisals(prev => prev.map(item => {
+        const id = item.id || item.appraisal_id;
+        return id === appId ? previousItem : item;
+      }));
+
+      if (previousDrawerItem) {
+        setSelectedAppraisal(previousDrawerItem);
+      }
+
+      alert(`Cloud Decision Sync Failed: ${err.message || 'Network error'}. Previous status restored.`);
     } finally {
       setUpdating(false);
     }
@@ -356,21 +398,21 @@ export default function ManagerDashboard({ theme, onExit }) {
                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   <button 
                     disabled={updating}
-                    onClick={() => handleUpdateStatus(selectedAppraisal.id, 'APPROVE')}
+                    onClick={() => handleUpdateStatus(selectedAppraisal.id || selectedAppraisal.appraisal_id, 'APPROVE')}
                     style={{ padding: '1rem', background: 'var(--emerald)', border: 'none', borderRadius: 'var(--radius-md)', color: 'white', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                   >
                     {updating ? 'Processing...' : <><ShieldCheck size={18} /> Formal Approval</>}
                   </button>
                   <button 
                     disabled={updating}
-                    onClick={() => handleUpdateStatus(selectedAppraisal.id, 'REJECT')}
+                    onClick={() => handleUpdateStatus(selectedAppraisal.id || selectedAppraisal.appraisal_id, 'REJECT')}
                     style={{ padding: '1rem', background: 'var(--rose)', border: 'none', borderRadius: 'var(--radius-md)', color: 'white', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                   >
                     {updating ? 'Processing...' : <><AlertTriangle size={18} /> Formal Rejection</>}
                   </button>
                   <button 
                     disabled={updating}
-                    onClick={() => handleUpdateStatus(selectedAppraisal.id, 'PENDING')}
+                    onClick={() => handleUpdateStatus(selectedAppraisal.id || selectedAppraisal.appraisal_id, 'PENDING')}
                     style={{ padding: '1rem', background: 'transparent', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', fontWeight: '700', cursor: 'pointer' }}
                   >
                     {updating ? 'Processing...' : 'Hold for Manual Review'}
