@@ -28,8 +28,11 @@ import {
   FileText,
   ShieldAlert,
   X,
-  Zap
+  Zap,
+  Download
 } from 'lucide-react';
+
+import { downloadPDF } from '../utils/generatePdf';
 
 const _envUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const API_BASE_URL = _envUrl.endsWith('/api/v1') ? _envUrl : `${_envUrl.replace(/\/$/, '')}/api/v1`;
@@ -60,6 +63,18 @@ export default function ManagerDashboard({ theme, onExit }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDownloadHistoricalPDF = (record) => {
+    if (!record || !record.cam_report) return;
+    const reconstructedParams = {
+      company: record.company_name,
+      sector: record.sector,
+      revenue: record.revenue || 0,
+      debt: record.debt || 0,
+      worth: record.worth || 0
+    };
+    downloadPDF(record.cam_report, reconstructedParams);
   };
 
   const handleUpdateStatus = async (appId, newDecision) => {
@@ -320,7 +335,18 @@ export default function ManagerDashboard({ theme, onExit }) {
                         {new Date(app.created_at).toLocaleDateString()}
                       </td>
                       <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
-                        <button className="btn-action-small"><Eye size={14} /></button>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button 
+                            className="btn-action-small"
+                            title="Download PDF"
+                            onClick={(e) => { e.stopPropagation(); handleDownloadHistoricalPDF(app); }}
+                            disabled={!app.cam_report}
+                            style={{ opacity: app.cam_report ? 1 : 0.3, cursor: app.cam_report ? 'pointer' : 'not-allowed' }}
+                          >
+                            <Download size={14} />
+                          </button>
+                          <button className="btn-action-small" title="View Details"><Eye size={14} /></button>
+                        </div>
                       </td>
                     </motion.tr>
                     ))}

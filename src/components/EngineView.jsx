@@ -72,7 +72,7 @@ export default function EngineView() {
   const [activeTab, setActiveTab] = useState('CREDIT APPRAISAL');
   const [logs, setLogs] = useState([]);
   const [progress, setProgress] = useState(0);
-  const [recentAppraisals, setRecentAppraisals] = useState([]);
+  
   const [sessionTime, setSessionTime] = useState('');
   
   // Navigation View: 'terminal' or 'history'
@@ -91,24 +91,6 @@ export default function EngineView() {
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
-
-  // Fetch recent appraisals from backend history
-  const fetchHistory = async () => {
-    try {
-      const res = await api.get('history/recent');
-      if (res.data?.status === 'success') {
-        setRecentAppraisals(res.data.data || []);
-      }
-    } catch (err) {
-      console.warn("Failed to fetch history:", err);
-    }
-  };
-
-useEffect(() => {
-    if (appStatus === "complete") {
-        fetchHistory();
-    }
-}, [appStatus]);
 
   // Auto-scroll logs (System Logs tab, post-completion)
   useEffect(() => {
@@ -314,16 +296,7 @@ useEffect(() => {
     downloadPDF(camReport, detectedParams);
   };
 
-  const handleDownloadHistoricalPDF = (record) => {
-    if (!record || !record.cam_report) return;
-    const reconstructedParams = {
-      company: record.company_name,
-      sector: record.sector,
-      revenue: record.revenue || 0,
-      debt: record.debt || 0,
-      worth: record.worth || 0
-    };
-    downloadPDF(record.cam_report, reconstructedParams);
+  downloadPDF(record.cam_report, reconstructedParams);
   };
 
   // Decision styling for the "Last Decision" metric card and the decision action bar.
@@ -442,26 +415,7 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Sidebar Item 2: Appraisal History */}
-            <div 
-              onClick={() => setCurrentView('history')}
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                padding: '0.6rem 1.25rem', 
-                background: currentView === 'history' ? '#f4f6f8' : 'transparent', 
-                color: currentView === 'history' ? '#0d213f' : '#506070', 
-                fontWeight: currentView === 'history' ? 600 : 400,
-                borderLeft: currentView === 'history' ? '3px solid #0d213f' : '3px solid transparent',
-                cursor: 'pointer'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <History size={16} />
-                <span>Appraisal History</span>
-              </div>
-            </div>
+
 
             {/* Sidebar Item 3: Manager Dashboard */}
             <div 
@@ -953,113 +907,6 @@ useEffect(() => {
                 </div>
               </div>
             </>
-          )}
-
-          {/* VIEW B: APPRAISAL HISTORY ARCHIVE */}
-          {currentView === 'history' && (
-            <div style={{ 
-              background: '#ffffff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
-              border: '1px solid #cbd5e1', 
-              borderRadius: '2px', 
-              display: 'flex', 
-              flexDirection: 'column'
-            }}>
-              
-              {/* History Header Banner (Background: #2c3540) */}
-              <div style={{ 
-                background: '#2c3540', 
-                color: '#ffffff', 
-                padding: '0.75rem 1.25rem', 
-                borderBottom: '1px solid var(--border-light)'
-              }}>
-                <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
-                  APPRAISAL RECORDS ARCHIVE
-                </div>
-                <div style={{ fontSize: '10px', color: '#8a99a8', marginTop: '2px' }}>
-                  Historical log of all processed borrower files and credit appraisal recommendations
-                </div>
-              </div>
-
-              {/* History Data Table */}
-              <div style={{ padding: '1.25rem', overflowX: 'auto' }}>
-                {recentAppraisals.length > 0 ? (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid #cbd5e1', color: '#8a99a8', textTransform: 'uppercase', fontSize: '10px' }}>
-                        <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700 }}>Borrower Name</th>
-                        <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700 }}>Sector</th>
-                        <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700, textAlign: 'center' }}>Appraisal Score</th>
-                        <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700, textAlign: 'right' }}>Recommended Limit</th>
-                        <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700, textAlign: 'right' }}>Interest Rate</th>
-                        <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700, textAlign: 'center' }}>Decision</th>
-                        <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700, textAlign: 'right' }}>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentAppraisals.map((record, index) => {
-                        const rowDecisionStyle = getDecisionStyle(record.decision);
-                        return (
-                          <tr key={index} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                            <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, color: '#2c3540' }}>{record.company_name}</td>
-                            <td style={{ padding: '0.6rem 0.75rem', color: '#506070', fontFamily: 'monospace' }}>{(record.sector ?? "UNKNOWN").toUpperCase()}</td>
-                            <td style={{ padding: '0.6rem 0.75rem', textAlign: 'center', fontWeight: 700, fontFamily: 'monospace' }}>
-                              {record.adjusted_score || record.base_score || 'N/A'}
-                            </td>
-                            <td style={{ padding: '0.6rem 0.75rem', textAlign: 'right', fontWeight: 700, fontFamily: 'monospace', color: '#0d213f' }}>
-                              {record.recommended_loan_amount}
-                            </td>
-                            <td style={{ padding: '0.6rem 0.75rem', textAlign: 'right', fontWeight: 700, fontFamily: 'monospace' }}>
-                              {record.recommended_interest_rate}
-                            </td>
-                            <td style={{ padding: '0.6rem 0.75rem', textAlign: 'center' }}>
-                              <span style={{ 
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                padding: '2px 6px',
-                                borderRadius: '2px',
-                                fontWeight: 800,
-                                fontSize: '10px',
-                                fontFamily: 'monospace',
-                                background: rowDecisionStyle.bg,
-                                color: rowDecisionStyle.color
-                              }}>
-                                <rowDecisionStyle.Icon size={11} />
-                                {rowDecisionStyle.label}
-                              </span>
-                            </td>
-                            <td style={{ padding: '0.6rem 0.75rem', textAlign: 'right' }}>
-                              <button 
-                                onClick={() => handleDownloadHistoricalPDF(record)}
-                                disabled={!record.cam_report}
-                                style={{ 
-                                  background: 'none', 
-                                  border: 'none', 
-                                  color: record.cam_report ? '#0d213f' : '#cbd5e1', 
-                                  cursor: record.cam_report ? 'pointer' : 'not-allowed', 
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                  fontSize: '11px',
-                                  fontWeight: 700
-                                }}
-                              >
-                                <Download size={12} />
-                                <span>PDF</span>
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                ) : (
-                  <div style={{ color: '#8a99a8', textAlign: 'center', padding: '2rem 0', fontStyle: 'italic' }}>
-                    No appraisal archive records found in database.
-                  </div>
-                )}
-              </div>
-            </div>
           )}
 
           {/* VIEW C: MANAGER DASHBOARD */}
