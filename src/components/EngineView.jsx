@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 
 import { downloadPDF } from '../utils/generatePdf';
+import ManagerDashboard from './ManagerDashboard';
 
 const _envUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const API_URL = _envUrl.endsWith('/api/v1') ? _envUrl : `${_envUrl.replace(/\/$/, '')}/api/v1`;
@@ -459,6 +460,27 @@ useEffect(() => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <History size={16} />
                 <span>Appraisal History</span>
+              </div>
+            </div>
+
+            {/* Sidebar Item 3: Manager Dashboard */}
+            <div 
+              onClick={() => setCurrentView('manager')}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                padding: '0.6rem 1.25rem', 
+                background: currentView === 'manager' ? '#f4f6f8' : 'transparent', 
+                color: currentView === 'manager' ? '#0d213f' : '#506070', 
+                fontWeight: currentView === 'manager' ? 600 : 400,
+                borderLeft: currentView === 'manager' ? '3px solid #0d213f' : '3px solid transparent',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <Shield size={16} />
+                <span>Manager Dashboard</span>
               </div>
             </div>
 
@@ -1038,6 +1060,11 @@ useEffect(() => {
                 )}
               </div>
             </div>
+          )}
+
+          {/* VIEW C: MANAGER DASHBOARD */}
+          {currentView === 'manager' && (
+            <ManagerDashboard onExit={() => setCurrentView('terminal')} />
           )}
 
         </main>
