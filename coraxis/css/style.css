@@ -1,0 +1,735 @@
+/*
+ * MediPulse Smart Hospital
+ * Custom Modern Styles & Design System
+ * Built on Bootstrap 5
+ */
+
+/* =========================
+   ROOT VARIABLES
+========================= */
+
+:root {
+    --primary: #0284c7;
+    --primary-dark: #0369a1;
+    --primary-light: #e0f2fe;
+
+    --secondary: #0f766e;
+    --accent: #06b6d4;
+
+    --emerald: #10b981;
+    --emerald-light: #d1fae5;
+
+    --rose: #f43f5e;
+    --rose-light: #ffe4e6;
+
+    --amber: #f59e0b;
+    --amber-light: #fef3c7;
+
+    --dark-bg: #0f172a;
+    --dark-card: #1e293b;
+
+    --light-bg: #f8fafc;
+    --border-color: #e2e8f0;
+
+    --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+
+    --card-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.08);
+    --card-shadow-hover: 0 20px 35px -5px rgba(2, 132, 199, 0.18);
+}
+
+/* =========================
+   GLOBAL
+========================= */
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--light-bg);
+    color: #334155;
+    overflow-x: hidden;
+    line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.navbar-brand {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+/* =========================
+   NAVBAR
+========================= */
+
+.glass-nav {
+    background: rgba(255, 255, 255, 0.92) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.navbar-brand .brand-badge {
+    background: linear-gradient(
+        135deg,
+        var(--primary),
+        var(--accent)
+    );
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 1.1rem;
+}
+
+.nav-link {
+    font-weight: 600;
+    color: #475569;
+    padding: 0.5rem 1rem !important;
+    border-radius: 8px;
+    transition: all 0.25s ease;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+/* =========================
+   HERO
+========================= */
+
+.hero-banner {
+    background: linear-gradient(
+        135deg,
+        #0f172a 0%,
+        #1e293b 50%,
+        #0369a1 100%
+    );
+    color: white;
+    padding: 4.5rem 0 3.5rem;
+    position: relative;
+    border-radius: 0 0 2rem 2rem;
+    overflow: hidden;
+}
+
+.hero-banner::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(
+        circle,
+        rgba(6, 182, 212, 0.25) 0%,
+        rgba(0, 0, 0, 0) 70%
+    );
+    pointer-events: none;
+}
+
+.hero-stat-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    padding: 1.25rem;
+    transition: transform 0.3s ease;
+}
+
+.hero-stat-card:hover {
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.16);
+}
+
+/* =========================
+   DEPARTMENT FILTER
+========================= */
+
+.dept-pill {
+    cursor: pointer;
+    padding: 10px 20px;
+    border-radius: 50px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.92rem;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dept-pill:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.dept-pill.active {
+    background: linear-gradient(
+        135deg,
+        var(--primary),
+        var(--primary-dark)
+    );
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+}
+
+/* =========================
+   DOCTOR CARD
+========================= */
+
+.doctor-card {
+    background: white;
+    border: 1px solid #edf2f7;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(
+        0.165,
+        0.84,
+        0.44,
+        1
+    );
+    box-shadow: var(--card-shadow);
+
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.doctor-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--card-shadow-hover);
+    border-color: #bae6fd;
+}
+
+.doctor-avatar-wrapper {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin: 1.5rem auto 0.5rem;
+
+    border-radius: 50%;
+    overflow: hidden;
+
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    border: 3px solid #f0f9ff;
+}
+
+.doctor-avatar-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.rating-badge {
+    background: #fef3c7;
+    color: #b45309;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+}
+
+.fee-badge {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.88rem;
+}
+
+/* =========================
+   SYMPTOM CHECKER
+========================= */
+
+.symptom-card {
+    background: linear-gradient(
+        145deg,
+        #ffffff 0%,
+        #f0f9ff 100%
+    );
+    border: 1px solid #bae6fd;
+    border-radius: 24px;
+    box-shadow: var(--card-shadow);
+}
+
+.symptom-chip {
+    cursor: pointer;
+    display: inline-block;
+
+    padding: 6px 14px;
+    background: #ffffff;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 30px;
+
+    font-size: 0.85rem;
+    font-weight: 500;
+
+    margin: 4px;
+    transition: all 0.2s ease;
+}
+
+.symptom-chip:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary-dark);
+}
+
+.symptom-chip.selected {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* =========================
+   SLOT BUTTON
+========================= */
+
+.slot-btn {
+    border: 1.5px solid #cbd5e1;
+    background: white;
+    border-radius: 12px;
+
+    padding: 10px 14px;
+
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #334155;
+
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.slot-btn:hover:not(:disabled) {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+.slot-btn.selected {
+    background: var(--primary) !important;
+    color: white !important;
+    border-color: var(--primary) !important;
+
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+}
+
+.slot-btn:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    border-color: #e2e8f0;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+/* =========================
+   APPOINTMENT TICKET
+========================= */
+
+.ticket-card {
+    background: white;
+    border: 2px dashed #cbd5e1;
+    border-radius: 20px;
+
+    position: relative;
+    overflow: hidden;
+}
+
+.ticket-header {
+    background: linear-gradient(
+        135deg,
+        var(--dark-bg),
+        var(--primary-dark)
+    );
+
+    color: white;
+    padding: 1.5rem;
+}
+
+.ticket-token-box {
+    background: var(--emerald-light);
+    color: #047857;
+
+    border: 1.5px solid #a7f3d0;
+    border-radius: 12px;
+
+    padding: 8px 16px;
+
+    font-family: monospace;
+    font-weight: 700;
+    font-size: 1.25rem;
+
+    letter-spacing: 1px;
+}
+
+/* =========================
+   QUEUE
+========================= */
+
+.queue-card {
+    background: white;
+    border-radius: 18px;
+    border: 1px solid var(--border-color);
+
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+}
+
+.queue-card:hover {
+    border-color: var(--accent);
+}
+
+.pulse-dot {
+    width: 10px;
+    height: 10px;
+
+    background-color: var(--emerald);
+    border-radius: 50%;
+
+    display: inline-block;
+
+    box-shadow: 0 0 0 rgba(16, 185, 129, 0.4);
+
+    animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+/* =========================
+   SCROLLBAR
+========================= */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+footer {
+    background: var(--dark-bg);
+    color: #94a3b8;
+    border-top: 1px solid #1e293b;
+}
+
+/* =========================
+   TOAST
+========================= */
+
+.toast-container {
+    z-index: 1100;
+}
+
+/* =========================
+   FILTER CARD
+========================= */
+
+.filter-card {
+    border: 1px solid var(--border-color) !important;
+
+    background: linear-gradient(
+        180deg,
+        #ffffff 0%,
+        #f8fafc 100%
+    ) !important;
+
+    transition: all 0.3s ease;
+}
+
+.filter-card:hover {
+    border-color: #cbd5e1 !important;
+}
+
+/* =========================
+   ACTIVE FILTER BADGES
+========================= */
+
+.active-filter-badge {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+
+    font-size: 0.82rem;
+    font-weight: 600;
+
+    padding: 5px 12px;
+    border-radius: 20px;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    border: 1px solid #bae6fd;
+}
+
+.active-filter-badge i.remove-badge {
+    cursor: pointer;
+    font-size: 0.75rem;
+
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.active-filter-badge i.remove-badge:hover {
+    opacity: 1;
+    color: var(--rose);
+}
+
+/* =========================
+   APPOINTMENTS TABLE
+========================= */
+
+.appointments-table-container {
+    background: white;
+    border-radius: 16px;
+
+    border: 1px solid var(--border-color);
+    box-shadow: var(--card-shadow);
+
+    overflow: hidden;
+}
+
+.appointments-table {
+    margin-bottom: 0;
+}
+
+.appointments-table th {
+    background-color: #f1f5f9;
+    color: #475569;
+
+    font-weight: 700;
+    font-size: 0.85rem;
+
+    /* Fixed: text-uppercase is not valid CSS */
+    text-transform: uppercase;
+
+    letter-spacing: 0.5px;
+
+    border-bottom: 2px solid #e2e8f0;
+
+    padding: 14px 16px;
+    vertical-align: middle;
+}
+
+.appointments-table td {
+    padding: 14px 16px;
+    vertical-align: middle;
+
+    font-size: 0.9rem;
+    color: #334155;
+
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.appointments-table tr:hover td {
+    background-color: #f8fafc;
+}
+
+/* =========================
+   BUTTON
+========================= */
+
+.btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+}
+
+/* =========================
+   STATUS FILTER PILLS
+========================= */
+
+.status-filter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.status-filter-pills .nav-link {
+    font-size: 0.85rem;
+    font-weight: 600;
+
+    color: #475569;
+    background-color: #f1f5f9;
+
+    border: 1px solid #e2e8f0;
+
+    border-radius: 8px;
+
+    transition: all 0.25s ease;
+    cursor: pointer;
+}
+
+.status-filter-pills .nav-link:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+
+    transform: translateY(-1px);
+}
+
+.status-filter-pills .nav-link.active {
+    background-color: var(--primary) !important;
+    color: #ffffff !important;
+
+    border-color: var(--primary) !important;
+
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+}
+
+/* Approved */
+
+.status-filter-pills .btn-pill-approved.active {
+    background-color: #10b981 !important;
+    border-color: #10b981 !important;
+
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+/* Rejected */
+
+.status-filter-pills .btn-pill-rejected.active {
+    background-color: #ef4444 !important;
+    border-color: #ef4444 !important;
+
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+/* Manual Review */
+
+.status-filter-pills .btn-pill-manual.active {
+    background-color: #f59e0b !important;
+    border-color: #f59e0b !important;
+
+    color: #0f172a !important;
+
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+}
+
+/* Review */
+
+.status-filter-pills .btn-pill-review.active {
+    background-color: #06b6d4 !important;
+    border-color: #06b6d4 !important;
+
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);
+}
+
+/* =========================
+   STATUS BADGES
+========================= */
+
+.badge-status-approved {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.badge-status-rejected {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.badge-status-manual {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.badge-status-review {
+    background-color: #cff4fc;
+    color: #055160;
+    border: 1px solid #9eeaf9;
+}
+
+/* =========================
+   PRINT APPOINTMENT PASS
+========================= */
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    #printablePassArea,
+    #printablePassArea * {
+        visibility: visible;
+    }
+
+    #printablePassArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 768px) {
+    .hero-banner {
+        padding: 3rem 0 2.5rem;
+    }
+
+    .dept-pill {
+        padding: 8px 14px;
+        font-size: 0.85rem;
+    }
+
+    .doctor-avatar-wrapper {
+        width: 85px;
+        height: 85px;
+    }
+
+    .status-filter-pills {
+        gap: 6px;
+    }
+
+    .status-filter-pills .nav-link {
+        font-size: 0.8rem;
+        padding: 8px 10px;
+    }
+}
