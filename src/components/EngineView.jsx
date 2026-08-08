@@ -460,7 +460,7 @@ export default function EngineView() {
               }}>
                 {/* Card 1: Risk Appraisal Score */}
                 <div style={{ 
-                  background: '#ffffff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
+                  background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
                   border: '1px solid #cbd5e1', 
                   padding: '1.25rem', 
                   textAlign: 'center', 
@@ -480,7 +480,7 @@ export default function EngineView() {
 
                 {/* Card 2: Extracted Revenue */}
                 <div style={{ 
-                  background: '#ffffff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
+                  background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
                   border: '1px solid #cbd5e1', 
                   padding: '1.25rem', 
                   textAlign: 'center', 
@@ -537,7 +537,7 @@ export default function EngineView() {
 
               {/* MAIN CONTAINER (DARK HEADER BANNER + TABLE CARD) */}
               <div style={{ 
-                background: '#ffffff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
+                background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
                 border: '1px solid #cbd5e1', 
                 borderRadius: '2px', 
                 display: 'flex', 
@@ -884,7 +884,7 @@ export default function EngineView() {
                           <button 
                             onClick={resetState}
                             style={{ 
-                              background: '#ffffff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
+                              background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
                               color: '#506070', 
                               border: '1px solid #cbd5e1', 
                               padding: '0.5rem 1rem', 
