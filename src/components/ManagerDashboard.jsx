@@ -72,7 +72,8 @@ export default function ManagerDashboard({ theme, onExit }) {
       sector: record.sector,
       revenue: record.revenue || 0,
       debt: record.debt || 0,
-      worth: record.worth || 0
+      worth: record.worth || 0,
+      baseScore: record.base_score || record.adjusted_score || 'N/A'
     };
     downloadPDF(record.cam_report, reconstructedParams);
   };
@@ -150,8 +151,9 @@ export default function ManagerDashboard({ theme, onExit }) {
   const flaggedCount = appraisals.filter(app => app.decision === 'REJECT').length;
 
   const filteredData = appraisals.filter(app => {
-    const matchesSearch = app.company_name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterStatus === 'ALL' || app.decision === filterStatus;
+    const matchesSearch = (app.company_name || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const filterKey = filterStatus === 'MANUAL REVIEW' ? 'PENDING' : filterStatus;
+    const matchesFilter = filterStatus === 'ALL' || app.decision === filterKey;
     return matchesSearch && matchesFilter;
   });
 
@@ -243,7 +245,7 @@ export default function ManagerDashboard({ theme, onExit }) {
                 />
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {['ALL', 'APPROVE', 'REJECT'].map(status => (
+                {['ALL', 'APPROVE', 'REJECT', 'MANUAL REVIEW'].map(status => (
                   <button 
                     key={status}
                     onClick={() => setFilterStatus(status)}
