@@ -296,8 +296,6 @@ export default function EngineView() {
     downloadPDF(camReport, detectedParams);
   };
 
-  downloadPDF(record.cam_report, reconstructedParams);
-  };
 
   // Decision styling for the "Last Decision" metric card and the decision action bar.
   // Only computed when a camReport exists; both render sites fall back to the
