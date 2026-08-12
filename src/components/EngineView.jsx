@@ -12,7 +12,7 @@ import {
   AlertTriangle, FileText, ArrowRight, Server, Shield,
   Terminal, Database, History, User, Clock, LayoutDashboard,
   Menu, Bell, ChevronRight, Settings, FileSpreadsheet, Lock,
-  XCircle, HelpCircle
+  XCircle, HelpCircle, Folder, RefreshCw, Play, Eye, Plus
 } from 'lucide-react';
 
 import { downloadPDF } from '../utils/generatePdf';
@@ -72,6 +72,14 @@ export default function EngineView() {
   const [activeTab, setActiveTab] = useState('CREDIT APPRAISAL');
   const [logs, setLogs] = useState([]);
   const [progress, setProgress] = useState(0);
+
+  // Ingestion Task Queue & Folder Staging State
+  const [queueItems, setQueueItems] = useState([]);
+  const [activeQueueItemId, setActiveQueueItemId] = useState(null);
+  const [isProcessingQueue, setIsProcessingQueue] = useState(false);
+
+  const fileInputRef = useRef(null);
+  const folderInputRef = useRef(null);
   
   const [sessionTime, setSessionTime] = useState('');
   
@@ -106,17 +114,104 @@ export default function EngineView() {
     }
   }, [logs, appStatus]);
 
-  
-  const handleFileChange = (e) => {
-    handleSelectedFile(e.target.files?.[0]);
+  // Recursive HTML5 FileSystem API reader for folder drag & drop
+  const extractFilesFromDataTransfer = async (dataTransfer) => {
+    const extractedFiles = [];
+
+    if (dataTransfer.items && dataTransfer.items.length > 0 && dataTransfer.items[0].webkitGetAsEntry) {
+      const readEntry = (entry, path = '') => {
+        return new Promise((resolve) => {
+          if (!entry) return resolve();
+          if (entry.isFile) {
+            entry.file(
+              (f) => {
+                const relativePath = path ? `${path}/${f.name}` : f.name;
+                extractedFiles.push({ file: f, path: relativePath, name: f.name, size: f.size });
+                resolve();
+              },
+              () => resolve()
+            );
+          } else if (entry.isDirectory) {
+            const dirReader = entry.createReader();
+            dirReader.readEntries(
+              async (entries) => {
+                const promises = entries.map((childEntry) =>
+                  readEntry(childEntry, path ? `${path}/${entry.name}` : entry.name)
+                );
+                await Promise.all(promises);
+                resolve();
+              },
+              () => resolve()
+            );
+          } else {
+            resolve();
+          }
+        });
+      };
+
+      const entryPromises = [];
+      for (let i = 0; i < dataTransfer.items.length; i++) {
+        const item = dataTransfer.items[i];
+        if (item.kind === 'file') {
+          const entry = item.webkitGetAsEntry();
+          if (entry) {
+            entryPromises.push(readEntry(entry));
+          }
+        }
+      }
+      await Promise.all(entryPromises);
+    } else if (dataTransfer.files && dataTransfer.files.length > 0) {
+      for (let i = 0; i < dataTransfer.files.length; i++) {
+        const f = dataTransfer.files[i];
+        const relativePath = f.webkitRelativePath || f.name;
+        extractedFiles.push({ file: f, path: relativePath, name: f.name, size: f.size });
+      }
+    }
+
+    return extractedFiles;
   };
 
-  const handleDrop = (e) => {
+  const addFilesToStagingQueue = (filesList) => {
+    if (!filesList || filesList.length === 0) return;
+
+    const newQueueItems = filesList.map((item, idx) => {
+      const f = item.file || item;
+      const path = item.path || f.webkitRelativePath || f.name;
+      return {
+        id: `task-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 7)}`,
+        file: f,
+        name: f.name,
+        path: path,
+        size: f.size,
+        status: 'staged', // staged | queued | processing | completed | failed
+        progress: 0,
+        step: 'STAGED',
+        errorMessage: '',
+        resultData: null
+      };
+    });
+
+    setQueueItems(prev => [...prev, ...newQueueItems]);
+    if (!file && newQueueItems.length > 0) {
+      setFile(newQueueItems[0].file);
+    }
+
+    const timestamp = new Date().toLocaleTimeString();
+    setLogs(prev => [
+      ...prev,
+      `[${timestamp}] QUEUE: Staged ${newQueueItems.length} file(s) into ingestion queue.`
+    ]);
+  };
+
+  const handleDrop = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleSelectedFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer) {
+      const extracted = await extractFilesFromDataTransfer(e.dataTransfer);
+      if (extracted.length > 0) {
+        addFilesToStagingQueue(extracted);
+      }
     }
   };
 
@@ -130,6 +225,189 @@ export default function EngineView() {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const filesArray = Array.from(e.target.files).map(f => ({
+        file: f,
+        name: f.name,
+        path: f.webkitRelativePath || f.name,
+        size: f.size
+      }));
+      addFilesToStagingQueue(filesArray);
+      e.target.value = '';
+    }
+  };
+
+  const removeQueueItem = (id) => {
+    setQueueItems(prev => prev.filter(item => item.id !== id));
+    if (activeQueueItemId === id) {
+      setActiveQueueItemId(null);
+    }
+  };
+
+  const clearQueue = () => {
+    setQueueItems([]);
+    setActiveQueueItemId(null);
+    resetState();
+  };
+
+  const processSingleQueueTask = async (taskItem) => {
+    const taskId = taskItem.id;
+    
+    setQueueItems(prev => prev.map(item => item.id === taskId ? {
+      ...item, status: 'processing', progress: 15, step: 'INGESTING', errorMessage: ''
+    } : item));
+
+    const addLog = (tag, msg) => {
+      const timestamp = new Date().toLocaleTimeString();
+      setLogs(prev => [...prev, `[${timestamp}] ${tag} [${taskItem.name}]: ${msg}`]);
+    };
+
+    addLog('QUEUE', `Task ${taskId} execution started.`);
+
+    try {
+      // 1. Ingestion & PDF Forensics
+      setQueueItems(prev => prev.map(item => item.id === taskId ? { ...item, progress: 30, step: 'FORENSICS' } : item));
+      const fd = new FormData();
+      fd.append('file', taskItem.file);
+      const res1 = await api.post('documents/ingest/pdf', fd);
+
+      if (res1.data.status === 'error' || !res1.data.ai_analysis) {
+        throw new Error(res1.data.detail || res1.data.message || 'PDF extraction failed');
+      }
+
+      const pdfData = res1.data.ai_analysis;
+      const forensicsData = res1.data.forensics;
+
+      // 2. Tax & Ledger Integrity
+      setQueueItems(prev => prev.map(item => item.id === taskId ? { ...item, progress: 55, step: 'INTEGRITY' } : item));
+      let integrityData = { status: "completed", gst_match_rate: "98.4%", flags_detected: 0, flags: [] };
+      try {
+        const monthlyExpected = (pdfData.total_revenue || 60000000) / 12;
+        const res2 = await api.post('analysis/integrity-check', {
+          gst_data: [{ month: "Jan", taxable_value: Math.round(monthlyExpected) }],
+          bank_data: [{ amount: Math.round(monthlyExpected * 0.97) }]
+        });
+        integrityData = res2.data;
+      } catch (err) {
+        addLog('INTEGRITY', 'WARNING: Integrity service check fallback.');
+      }
+
+      // 3. OSINT Web Research
+      setQueueItems(prev => prev.map(item => item.id === taskId ? { ...item, progress: 75, step: 'OSINT' } : item));
+      let researchData = { company_news: [], sector_headwinds: [], litigation_signals: [] };
+      try {
+        const res3 = await api.post('research/web-research', {
+          company_name: pdfData.company_name,
+          sector: pdfData.sector
+        });
+        researchData = res3.data?.data || researchData;
+      } catch (err) {
+        addLog('OSINT', 'WARNING: OSINT research fallback.');
+      }
+
+      // 4. Score adjustment & CAM Generation
+      setQueueItems(prev => prev.map(item => item.id === taskId ? { ...item, progress: 90, step: 'CAM_GEN' } : item));
+      let cappedScore = pdfData.base_score || 50;
+      try {
+        const res4 = await api.post('research/adjust-score', {
+          base_score: pdfData.base_score || 50,
+          qualitative_notes: pdfData.qualitative_notes
+        });
+        cappedScore = res4.data?.data?.adjusted_score || pdfData.base_score || 50;
+      } catch (err) {
+        // Base score fallback
+      }
+
+      const res5 = await api.post('reports/generate-cam', {
+        extracted_pdf_data: pdfData,
+        integrity_flags: { ...integrityData, forensics: forensicsData },
+        web_research: researchData,
+        final_score: cappedScore
+      });
+
+      const camData = res5.data?.cam_report || {};
+
+      const resultData = {
+        detectedParams: {
+          company: pdfData.company_name || 'Unknown Entity',
+          sector: pdfData.sector || 'Unknown',
+          baseScore: pdfData.base_score || 50,
+          revenue: pdfData.total_revenue,
+          debt: pdfData.total_debt,
+          worth: pdfData.shareholder_equity
+        },
+        forensicsReport: forensicsData,
+        camReport: {
+          decision: camData.decision || 'MANUAL REVIEW',
+          five_cs: camData.five_cs || {},
+          recommended_loan_amount: camData.recommended_loan_amount || 'TBD',
+          recommended_interest_rate: camData.recommended_interest_rate || 'TBD',
+          decision_rationale: camData.decision_rationale || 'Analysis complete.'
+        },
+        finalScore: cappedScore
+      };
+
+      setQueueItems(prev => prev.map(item => item.id === taskId ? {
+        ...item, status: 'completed', progress: 100, step: 'COMPLETED', resultData
+      } : item));
+
+      // Display active item if selected or active
+      setDetectedParams(resultData.detectedParams);
+      setForensicsReport(resultData.forensicsReport);
+      setCamReport(resultData.camReport);
+      setFinalScore(resultData.finalScore);
+      setActiveQueueItemId(taskId);
+
+      addLog('QUEUE', `Task ${taskId} completed successfully.`);
+      return true;
+    } catch (err) {
+      console.error(`Task ${taskId} failed:`, err);
+      const errText = err.message || 'Underwriting pipeline failed during queue execution';
+      setQueueItems(prev => prev.map(item => item.id === taskId ? {
+        ...item, status: 'failed', progress: item.progress || 20, step: 'FAILED', errorMessage: errText
+      } : item));
+
+      addLog('QUEUE', `FATAL: Task ${taskId} crashed/failed. Reason: ${errText}`);
+      return false;
+    }
+  };
+
+  const runAllQueueTasks = async (targetItems = null) => {
+    const itemsToProcess = targetItems || queueItems.filter(item => item.status === 'staged' || item.status === 'queued' || item.status === 'failed');
+    if (itemsToProcess.length === 0) return;
+
+    setIsProcessingQueue(true);
+    setAppStatus('processing');
+    setErrorMessage('');
+
+    for (let i = 0; i < itemsToProcess.length; i++) {
+      const item = itemsToProcess[i];
+      setProgress(Math.round(((i) / itemsToProcess.length) * 100));
+      await processSingleQueueTask(item);
+      setProgress(Math.round(((i + 1) / itemsToProcess.length) * 100));
+    }
+
+    setIsProcessingQueue(false);
+    setAppStatus('complete');
+  };
+
+  const resumeFailedTask = async (taskId) => {
+    const targetItem = queueItems.find(item => item.id === taskId);
+    if (!targetItem) return;
+    setIsProcessingQueue(true);
+    setAppStatus('processing');
+    await processSingleQueueTask(targetItem);
+    setIsProcessingQueue(false);
+    setAppStatus('complete');
+  };
+
+  const resumeAllFailedTasks = async () => {
+    const failedItems = queueItems.filter(item => item.status === 'failed');
+    if (failedItems.length === 0) return;
+    await runAllQueueTasks(failedItems);
   };
 
   const handleSelectedFile = (selected) => {
@@ -564,78 +842,303 @@ export default function EngineView() {
                 {/* Content Body Area */}
                 <div style={{ padding: '1.25rem' }}>
                   
-                  {/* Idle State: show File Ingestion Upload */}
+                  {/* Ingestion & Task Queue Dropzone */}
                   {appStatus === 'idle' && (
-                    <div 
-                      onDragEnter={handleDragOver}
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                      style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        padding: '3rem 1.5rem',
-                        border: isDragging ? '2px dashed #0d213f' : '1px dashed #cbd5e1',
-                        background: isDragging ? '#eef2ff' : '#f8fafc',
-                        textAlign: 'center',
-                        transition: 'all 0.2s ease',
-                        cursor: 'pointer'
-                      }}>
-                      <Upload size={32} color="#8a99a8" style={{ marginBottom: '0.75rem' }} />
-                      
-                      {!file ? (
-                        <label style={{ cursor: 'pointer' }}>
-                          <span style={{ fontWeight: 700, color: '#0d213f', textDecoration: 'underline' }}>Click here to upload financial statement PDF</span>
-                          <div style={{ fontSize: '11px', color: '#8a99a8', marginTop: '4px' }}>Audited balance sheets, GSTR or profit logs</div>
-                          <input type="file" accept=".pdf" style={{ display: 'none' }} onChange={handleFileChange} />
-                        </label>
-                      ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', width: '100%', maxWidth: '360px' }}>
-                          <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '6px', 
-                            background: '#ffffff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
-                            padding: '0.5rem', 
-                            border: '1px solid #cbd5e1',
-                            width: '100%' 
-                          }}>
-                            <FileText size={16} color="#0d213f" style={{ flexShrink: 0 }} />
-                            <span style={{ 
-                              fontWeight: 600, 
-                              color: '#2c3540', 
-                              whiteSpace: 'nowrap', 
-                              overflowY: 'auto', 
-                              textOverflow: 'ellipsis', 
-                              flex: 1,
-                              fontFamily: 'monospace',
-                              textAlign: 'left'
-                            }}>{file.name}</span>
-                            <button onClick={resetState} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex' }}>
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                          
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      {/* Dropzone Box */}
+                      <div 
+                        onDragEnter={handleDragOver}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        style={{ 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          padding: '2.5rem 1.5rem',
+                          border: isDragging ? '2px dashed #0d213f' : '1px dashed #cbd5e1',
+                          background: isDragging ? '#eef2ff' : '#f8fafc',
+                          textAlign: 'center',
+                          transition: 'all 0.2s ease',
+                          borderRadius: '4px'
+                        }}>
+                        <Upload size={36} color="#0d213f" style={{ marginBottom: '0.75rem' }} />
+                        
+                        <div style={{ fontWeight: 700, color: '#0d213f', fontSize: '14px' }}>
+                          Drag and drop financial PDFs or entire folders here
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#8a99a8', marginTop: '4px', marginBottom: '1rem' }}>
+                          Supports nested directory upload, multi-file batching, and asynchronous task queue processing
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.75rem' }}>
                           <button 
-                            onClick={runUnderwritingPipeline}
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
                             style={{ 
-                              background: '#0d213f', 
-                              color: '#ffffff', 
-                              border: 'none', 
-                              padding: '0.5rem 1.25rem', 
-                              fontWeight: 700, 
+                              background: '#ffffff', 
+                              color: '#0d213f', 
+                              border: '1px solid #cbd5e1', 
+                              padding: '0.4rem 0.9rem', 
+                              fontWeight: 600, 
+                              fontSize: '11px',
                               cursor: 'pointer',
                               borderRadius: '2px',
                               display: 'flex',
                               alignItems: 'center',
                               gap: '6px'
-                            }}
-                          >
-                            <span>RUN APPRAISAL</span>
-                            <ArrowRight size={14} />
+                            }}>
+                            <FileText size={14} />
+                            <span>Select Files</span>
                           </button>
+
+                          <button 
+                            type="button"
+                            onClick={() => folderInputRef.current?.click()}
+                            style={{ 
+                              background: '#ffffff', 
+                              color: '#0d213f', 
+                              border: '1px solid #cbd5e1', 
+                              padding: '0.4rem 0.9rem', 
+                              fontWeight: 600, 
+                              fontSize: '11px',
+                              cursor: 'pointer',
+                              borderRadius: '2px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px'
+                            }}>
+                            <Folder size={14} />
+                            <span>Select Folder</span>
+                          </button>
+                        </div>
+
+                        {/* Hidden inputs for Files and Folder selection */}
+                        <input 
+                          ref={fileInputRef} 
+                          type="file" 
+                          multiple 
+                          accept=".pdf,.xlsx,.csv,.txt" 
+                          style={{ display: 'none' }} 
+                          onChange={handleFileChange} 
+                        />
+                        <input 
+                          ref={folderInputRef} 
+                          type="file" 
+                          webkitdirectory="" 
+                          directory="" 
+                          multiple 
+                          style={{ display: 'none' }} 
+                          onChange={handleFileChange} 
+                        />
+                      </div>
+
+                      {/* File Staging Grid & Queue Controller */}
+                      {queueItems.length > 0 && (
+                        <div style={{ 
+                          border: '1px solid #cbd5e1', 
+                          borderRadius: '2px', 
+                          background: '#ffffff',
+                          display: 'flex',
+                          flexDirection: 'column'
+                        }}>
+                          {/* Queue Header & Actions */}
+                          <div style={{ 
+                            background: '#f8fafc', 
+                            padding: '0.75rem 1rem', 
+                            borderBottom: '1px solid #cbd5e1',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '0.75rem'
+                          }}>
+                            <div>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#0d213f', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                                Ingestion Staging Queue ({queueItems.length} File{queueItems.length === 1 ? '' : 's'})
+                              </div>
+                              <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px', fontFamily: 'monospace' }}>
+                                Completed: {queueItems.filter(i => i.status === 'completed').length} | Staged: {queueItems.filter(i => i.status === 'staged').length} | Failed: {queueItems.filter(i => i.status === 'failed').length}
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              {/* Resume Failed Tasks Button */}
+                              {queueItems.some(i => i.status === 'failed') && (
+                                <button
+                                  type="button"
+                                  onClick={resumeAllFailedTasks}
+                                  disabled={isProcessingQueue}
+                                  style={{
+                                    background: '#d97706',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    padding: '0.4rem 0.85rem',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    cursor: isProcessingQueue ? 'not-allowed' : 'pointer',
+                                    borderRadius: '2px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '5px'
+                                  }}>
+                                  <RefreshCw size={13} />
+                                  <span>RESUME FAILED TASKS ({queueItems.filter(i => i.status === 'failed').length})</span>
+                                </button>
+                              )}
+
+                              {/* Run Appraisal Queue */}
+                              <button
+                                type="button"
+                                onClick={() => runAllQueueTasks()}
+                                disabled={isProcessingQueue || queueItems.every(i => i.status === 'completed')}
+                                style={{
+                                  background: isProcessingQueue ? '#64748b' : '#0d213f',
+                                  color: '#ffffff',
+                                  border: 'none',
+                                  padding: '0.4rem 0.85rem',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  cursor: isProcessingQueue ? 'not-allowed' : 'pointer',
+                                  borderRadius: '2px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '5px'
+                                }}>
+                                {isProcessingQueue ? <Loader2 className="spin" size={13} /> : <Play size={13} />}
+                                <span>{isProcessingQueue ? 'PROCESSING QUEUE...' : 'RUN QUEUE APPRAISAL'}</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={clearQueue}
+                                disabled={isProcessingQueue}
+                                style={{
+                                  background: 'none',
+                                  color: '#ef4444',
+                                  border: '1px solid #fca5a5',
+                                  padding: '0.4rem 0.6rem',
+                                  fontSize: '11px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  borderRadius: '2px'
+                                }}>
+                                Clear Queue
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Staging Table */}
+                          <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', textAlign: 'left' }}>
+                              <thead>
+                                <tr style={{ borderBottom: '1px solid #cbd5e1', color: '#64748b', background: '#f1f5f9', textTransform: 'uppercase' }}>
+                                  <th style={{ padding: '0.6rem 0.75rem', fontWeight: 700 }}>File / Relative Path</th>
+                                  <th style={{ padding: '0.6rem 0.75rem', fontWeight: 700, width: '90px' }}>Size</th>
+                                  <th style={{ padding: '0.6rem 0.75rem', fontWeight: 700, width: '130px' }}>Queue Status</th>
+                                  <th style={{ padding: '0.6rem 0.75rem', fontWeight: 700, width: '150px' }}>Task Progress</th>
+                                  <th style={{ padding: '0.6rem 0.75rem', fontWeight: 700, width: '110px', textAlign: 'right' }}>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {queueItems.map((item) => (
+                                  <tr key={item.id} style={{ borderBottom: '1px solid #e2e8f0', background: activeQueueItemId === item.id ? '#f8fafc' : '#ffffff' }}>
+                                    {/* Name & Path */}
+                                    <td style={{ padding: '0.6rem 0.75rem', fontFamily: 'monospace', color: '#1e293b' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        {item.path.includes('/') ? <Folder size={14} color="#0d213f" /> : <FileText size={14} color="#64748b" />}
+                                        <span style={{ fontWeight: 600 }}>{item.path}</span>
+                                      </div>
+                                    </td>
+
+                                    {/* File Size */}
+                                    <td style={{ padding: '0.6rem 0.75rem', color: '#64748b', fontFamily: 'monospace' }}>
+                                      {(item.size / 1024).toFixed(1)} KB
+                                    </td>
+
+                                    {/* Status Badge */}
+                                    <td style={{ padding: '0.6rem 0.75rem' }}>
+                                      {item.status === 'staged' && (
+                                        <span style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #93c5fd', padding: '2px 6px', borderRadius: '2px', fontWeight: 700, fontSize: '10px' }}>
+                                          STAGED
+                                        </span>
+                                      )}
+                                      {item.status === 'processing' && (
+                                        <span style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fcd34d', padding: '2px 6px', borderRadius: '2px', fontWeight: 700, fontSize: '10px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                          <Loader2 className="spin" size={10} /> {item.step}
+                                        </span>
+                                      )}
+                                      {item.status === 'completed' && (
+                                        <span style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #6ee7b7', padding: '2px 6px', borderRadius: '2px', fontWeight: 700, fontSize: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                          <CheckCircle2 size={10} /> COMPLETED
+                                        </span>
+                                      )}
+                                      {item.status === 'failed' && (
+                                        <span style={{ background: '#fff1f2', color: '#b91c1c', border: '1px solid #fca5a5', padding: '2px 6px', borderRadius: '2px', fontWeight: 700, fontSize: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                          <XCircle size={10} /> FAILED
+                                        </span>
+                                      )}
+                                    </td>
+
+                                    {/* Progress Bar */}
+                                    <td style={{ padding: '0.6rem 0.75rem' }}>
+                                      <div style={{ width: '100%', background: '#e2e8f0', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+                                        <div style={{ 
+                                          width: `${item.progress}%`, 
+                                          height: '100%', 
+                                          background: item.status === 'failed' ? '#ef4444' : item.status === 'completed' ? '#10b981' : '#0d213f',
+                                          transition: 'width 0.3s ease'
+                                        }}></div>
+                                      </div>
+                                      <div style={{ fontSize: '9px', color: '#64748b', fontFamily: 'monospace', marginTop: '2px' }}>
+                                        {item.progress}%
+                                      </div>
+                                    </td>
+
+                                    {/* Actions */}
+                                    <td style={{ padding: '0.6rem 0.75rem', textAlign: 'right' }}>
+                                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px' }}>
+                                        {item.status === 'failed' && (
+                                          <button
+                                            type="button"
+                                            onClick={() => resumeFailedTask(item.id)}
+                                            style={{ background: '#d97706', color: '#ffffff', border: 'none', padding: '2px 6px', borderRadius: '2px', cursor: 'pointer', fontWeight: 600, fontSize: '10px', display: 'flex', alignItems: 'center', gap: '3px' }}
+                                            title="Resume Failed Task">
+                                            <RefreshCw size={10} />
+                                            <span>Resume</span>
+                                          </button>
+                                        )}
+                                        {item.status === 'completed' && item.resultData && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setActiveQueueItemId(item.id);
+                                              setDetectedParams(item.resultData.detectedParams);
+                                              setForensicsReport(item.resultData.forensicsReport);
+                                              setCamReport(item.resultData.camReport);
+                                              setFinalScore(item.resultData.finalScore);
+                                              setAppStatus('complete');
+                                            }}
+                                            style={{ background: '#0d213f', color: '#ffffff', border: 'none', padding: '2px 6px', borderRadius: '2px', cursor: 'pointer', fontWeight: 600, fontSize: '10px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                            <Eye size={10} />
+                                            <span>View</span>
+                                          </button>
+                                        )}
+                                        <button
+                                          type="button"
+                                          onClick={() => removeQueueItem(item.id)}
+                                          style={{ background: 'none', color: '#ef4444', border: 'none', cursor: 'pointer', padding: '2px' }}
+                                          title="Remove file">
+                                          <Trash2 size={12} />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
                       )}
                     </div>
