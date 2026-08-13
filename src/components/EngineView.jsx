@@ -209,7 +209,7 @@ export default function EngineView() {
       setProgress(40);
 
       addLog('INTEGRITY', 'Validating GST and bank records.');
-      let integrityData = { status: "completed", gst_match_rate: "98.4%", flags_detected: 0, flags: [] };
+      let integrityData = { status: "completed", gst_match_rate: "N/A", flags_detected: 0, flags: [] };
       try {
         const monthlyExpected = (pdfData.total_revenue || 60000000) / 12;
         const res2 = await api.post('analysis/integrity-check', {
@@ -217,7 +217,11 @@ export default function EngineView() {
           bank_data: [{ amount: Math.round(monthlyExpected * 0.97) }]
         });
         integrityData = res2.data;
-        addLog('INTEGRITY', `Validation completed. Turnover match: ${integrityData.gst_match_rate || '98.4%'}`);
+        if (integrityData.flags_detected > 0) {
+          addLog('INTEGRITY', `Validation completed with ${integrityData.flags_detected} flags. Match: ${integrityData.gst_match_rate || 'N/A'}`);
+        } else {
+          addLog('INTEGRITY', `Validation completed. Turnover match: ${integrityData.gst_match_rate || 'N/A'}`);
+        }
       } catch (err) {
         addLog('INTEGRITY', 'WARNING: GST verification unavailable. Using default checks.');
       }
