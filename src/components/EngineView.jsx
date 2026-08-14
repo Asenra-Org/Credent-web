@@ -209,7 +209,19 @@ export default function EngineView() {
     setIsDragging(false);
     if (e.dataTransfer) {
       const extracted = await extractFilesFromDataTransfer(e.dataTransfer);
-      if (extracted.length > 0) {
+      if (extracted.length === 0) return;
+
+      // A folder drop gives files a relative path containing '/' (e.g. "FolderName/file.pdf").
+      // Always route folder drops through the queue, even if the folder contains only one file.
+      const isFromFolder = extracted.some(item => (item.path || '').includes('/'));
+
+      if (!isFromFolder && extracted.length === 1) {
+        // Bare single-file drop: bypass queue — use the existing direct terminal flow
+        const singleFile = extracted[0].file || extracted[0];
+        resetState();
+        setFile(singleFile);
+        setTimeout(() => runUnderwritingPipeline(), 0);
+      } else {
         addFilesToStagingQueue(extracted);
       }
     }
@@ -229,13 +241,23 @@ export default function EngineView() {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      const filesArray = Array.from(e.target.files).map(f => ({
-        file: f,
-        name: f.name,
-        path: f.webkitRelativePath || f.name,
-        size: f.size
-      }));
-      addFilesToStagingQueue(filesArray);
+      if (e.target.files.length === 1) {
+        // ASE-59: Single file — bypass queue, run the direct terminal pipeline immediately.
+        // This applies regardless of whether the file came from the picker or drag/drop.
+        const singleFile = e.target.files[0];
+        resetState();
+        setFile(singleFile);
+        setTimeout(() => runUnderwritingPipeline(), 0);
+      } else {
+        // 2+ files (or folder): stage into queue for batch processing.
+        const filesArray = Array.from(e.target.files).map(f => ({
+          file: f,
+          name: f.name,
+          path: f.webkitRelativePath || f.name,
+          size: f.size
+        }));
+        addFilesToStagingQueue(filesArray);
+      }
       e.target.value = '';
     }
   };
@@ -255,9 +277,9 @@ export default function EngineView() {
 
   const processSingleQueueTask = async (taskItem) => {
     const taskId = taskItem.id;
-    
+
     setQueueItems(prev => prev.map(item => item.id === taskId ? {
-      ...item, status: 'processing', progress: 15, step: 'INGESTING', errorMessage: ''
+      ...item, status: 'processing', progress: 0, step: 'INGESTING', errorMessage: ''
     } : item));
 
     const addLog = (tag, msg) => {
@@ -267,11 +289,64 @@ export default function EngineView() {
 
     addLog('QUEUE', `Task ${taskId} execution started.`);
 
+    // Generate a unique case_id and attach it to the ingest request so the
+    // backend can track this specific run under GET /documents/ingest/status/{caseId}.
+    const caseId = `case-${taskId}-${Date.now()}`;
+    let pollerAborted = false;
+
+    // Self-terminating status poller. The backend long-polls while in-flight
+    // (blocks rather than returning immediately), so we loop sequentially rather
+    // than using setInterval. A 404 with {"detail":"Case not found."} is terminal
+    // — it means the ID is invalid, not "not ready yet".
+    const pollStatus = async () => {
+      while (!pollerAborted) {
+        try {
+          const statusRes = await api.get(
+            `documents/ingest/status/${caseId}`,
+            { timeout: 30000 }  // generous timeout — endpoint long-polls server-side
+          );
+          const s = statusRes.data;
+          // Apply real backend fields: progress (0-100 number), stage (string), status (string)
+          const backendProgress = typeof s.progress === 'number' ? s.progress : null;
+          const backendStage   = s.stage || s.current_stage || null;
+          const backendStatus  = s.status || null;
+
+          if (backendProgress !== null || backendStage !== null) {
+            setQueueItems(prev => prev.map(item => {
+              if (item.id !== taskId) return item;
+              return {
+                ...item,
+                ...(backendProgress !== null && { progress: backendProgress }),
+                ...(backendStage    !== null && { step: backendStage }),
+              };
+            }));
+          }
+
+          // Stop polling if the backend signals completion or failure
+          if (backendStatus === 'completed' || backendStatus === 'failed') {
+            pollerAborted = true;
+            break;
+          }
+        } catch (err) {
+          const httpStatus = err.response?.status;
+          if (httpStatus === 404) {
+            // 404 = "Case not found" — the case_id is unknown. Stop polling gracefully.
+            pollerAborted = true;
+            break;
+          }
+          // Any other network error: continue polling (transient connectivity issue)
+        }
+      }
+    };
+
+    // Start the poller concurrently — it runs alongside the sequential pipeline calls
+    const pollerPromise = pollStatus();
+
     try {
       // 1. Ingestion & PDF Forensics
-      setQueueItems(prev => prev.map(item => item.id === taskId ? { ...item, progress: 30, step: 'FORENSICS' } : item));
       const fd = new FormData();
       fd.append('file', taskItem.file);
+      fd.append('case_id', caseId);  // passes our tracking ID to the backend
       const res1 = await api.post('documents/ingest/pdf', fd);
 
       if (res1.data.status === 'error' || !res1.data.ai_analysis) {
@@ -281,22 +356,41 @@ export default function EngineView() {
       const pdfData = res1.data.ai_analysis;
       const forensicsData = res1.data.forensics;
 
+      // Ingest resolved — stop the poller and log real FORENSICS data
+      pollerAborted = true;
+      await pollerPromise;
+
+      addLog('INGEST', `Document parsed. Entity: ${pdfData.company_name || 'Unknown'}`);
+      addLog('FORENSICS', forensicsData?.is_suspicious
+        ? 'Integrity scan complete. Suspicious activity detected.'
+        : 'Integrity scan complete. No suspicious activity found.');
+      if (forensicsData?.is_suspicious && forensicsData?.flags?.length > 0) {
+        addLog('FORENSICS', `WARNING: ${forensicsData.flags.join(', ')}`);
+      }
+      setQueueItems(prev => prev.map(item => item.id === taskId
+        ? { ...item, progress: Math.max(item.progress, 40), step: 'INTEGRITY' }
+        : item));
+
       // 2. Tax & Ledger Integrity
-      setQueueItems(prev => prev.map(item => item.id === taskId ? { ...item, progress: 55, step: 'INTEGRITY' } : item));
-      let integrityData = { status: "completed", gst_match_rate: "98.4%", flags_detected: 0, flags: [] };
+      addLog('INTEGRITY', 'Validating GST and bank records.');
+      let integrityData = { status: 'completed', gst_match_rate: null, flags_detected: 0, flags: [] };
       try {
         const monthlyExpected = (pdfData.total_revenue || 60000000) / 12;
         const res2 = await api.post('analysis/integrity-check', {
-          gst_data: [{ month: "Jan", taxable_value: Math.round(monthlyExpected) }],
+          gst_data: [{ month: 'Jan', taxable_value: Math.round(monthlyExpected) }],
           bank_data: [{ amount: Math.round(monthlyExpected * 0.97) }]
         });
         integrityData = res2.data;
+        addLog('INTEGRITY', `Validation complete. Turnover match: ${integrityData.gst_match_rate || 'N/A'}`);
       } catch (err) {
         addLog('INTEGRITY', 'WARNING: Integrity service check fallback.');
       }
+      setQueueItems(prev => prev.map(item => item.id === taskId
+        ? { ...item, progress: Math.max(item.progress, 60), step: 'OSINT' }
+        : item));
 
       // 3. OSINT Web Research
-      setQueueItems(prev => prev.map(item => item.id === taskId ? { ...item, progress: 75, step: 'OSINT' } : item));
+      addLog('OSINT', 'Checking MCA and public court records.');
       let researchData = { company_news: [], sector_headwinds: [], litigation_signals: [] };
       try {
         const res3 = await api.post('research/web-research', {
@@ -304,12 +398,16 @@ export default function EngineView() {
           sector: pdfData.sector
         });
         researchData = res3.data?.data || researchData;
+        addLog('OSINT', `${researchData.sector_headwinds?.length || 0} sector alerts found.`);
       } catch (err) {
         addLog('OSINT', 'WARNING: OSINT research fallback.');
       }
+      setQueueItems(prev => prev.map(item => item.id === taskId
+        ? { ...item, progress: Math.max(item.progress, 75), step: 'RISK' }
+        : item));
 
-      // 4. Score adjustment & CAM Generation
-      setQueueItems(prev => prev.map(item => item.id === taskId ? { ...item, progress: 90, step: 'CAM_GEN' } : item));
+      // 4. Risk Score Adjustment
+      addLog('RISK', `Calculating risk score. Base: ${pdfData.base_score || 50}/100`);
       let cappedScore = pdfData.base_score || 50;
       try {
         const res4 = await api.post('research/adjust-score', {
@@ -317,10 +415,16 @@ export default function EngineView() {
           qualitative_notes: pdfData.qualitative_notes
         });
         cappedScore = res4.data?.data?.adjusted_score || pdfData.base_score || 50;
+        addLog('RISK', `Risk score finalized: ${cappedScore}/100`);
       } catch (err) {
-        // Base score fallback
+        addLog('RISK', 'Using base risk score.');
       }
+      setQueueItems(prev => prev.map(item => item.id === taskId
+        ? { ...item, progress: Math.max(item.progress, 90), step: 'CAM_GEN' }
+        : item));
 
+      // 5. CAM Generation
+      addLog('ORCHESTRATION', 'Generating Credit Appraisal Memo.');
       const res5 = await api.post('reports/generate-cam', {
         extracted_pdf_data: pdfData,
         integrity_flags: { ...integrityData, forensics: forensicsData },
@@ -329,6 +433,7 @@ export default function EngineView() {
       });
 
       const camData = res5.data?.cam_report || {};
+      addLog('ORCHESTRATION', `CAM generated. Decision: ${camData.decision || 'UNKNOWN'}`);
 
       const resultData = {
         detectedParams: {
@@ -354,7 +459,6 @@ export default function EngineView() {
         ...item, status: 'completed', progress: 100, step: 'COMPLETED', resultData
       } : item));
 
-      // Display active item if selected or active
       setDetectedParams(resultData.detectedParams);
       setForensicsReport(resultData.forensicsReport);
       setCamReport(resultData.camReport);
@@ -364,12 +468,13 @@ export default function EngineView() {
       addLog('QUEUE', `Task ${taskId} completed successfully.`);
       return true;
     } catch (err) {
+      pollerAborted = true;
+      await pollerPromise;
       console.error(`Task ${taskId} failed:`, err);
       const errText = err.message || 'Underwriting pipeline failed during queue execution';
       setQueueItems(prev => prev.map(item => item.id === taskId ? {
-        ...item, status: 'failed', progress: item.progress || 20, step: 'FAILED', errorMessage: errText
+        ...item, status: 'failed', progress: item.progress || 0, step: 'FAILED', errorMessage: errText
       } : item));
-
       addLog('QUEUE', `FATAL: Task ${taskId} crashed/failed. Reason: ${errText}`);
       return false;
     }
