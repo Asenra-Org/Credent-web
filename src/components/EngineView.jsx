@@ -67,6 +67,7 @@ export default function EngineView() {
   const [detectedParams, setDetectedParams] = useState(null);
   const [forensicsReport, setForensicsReport] = useState(null);
   const [camReport, setCamReport] = useState(null);
+  const [osintData, setOsintData] = useState(null);
   const [finalScore, setFinalScore] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
   const [activeTab, setActiveTab] = useState('CREDIT APPRAISAL');
@@ -466,7 +467,8 @@ export default function EngineView() {
           recommended_interest_rate: camData.recommended_interest_rate || 'TBD',
           decision_rationale: camData.decision_rationale || 'Analysis complete.'
         },
-        finalScore: cappedScore
+        finalScore: cappedScore,
+        osintData: researchData
       };
 
       setQueueItems(prev => prev.map(item => item.id === taskId ? {
@@ -477,6 +479,7 @@ export default function EngineView() {
       setForensicsReport(resultData.forensicsReport);
       setCamReport(resultData.camReport);
       setFinalScore(resultData.finalScore);
+      setOsintData(resultData.osintData);
       setActiveQueueItemId(taskId);
 
       addLog('QUEUE', `Task ${taskId} completed successfully.`);
@@ -530,11 +533,13 @@ export default function EngineView() {
   };
 
   const handleSelectedFile = (selected) => {
+  const handleSelectedFile = (selected) => {
     if (selected) {
       setFile(selected);
       setDetectedParams(null);
       setCamReport(null);
       setForensicsReport(null);
+      setOsintData(null);
       setErrorMessage('');
       setAppStatus('idle');
       
@@ -552,6 +557,7 @@ export default function EngineView() {
     setDetectedParams(null);
     setCamReport(null);
     setForensicsReport(null);
+    setOsintData(null);
     setErrorMessage('');
     setAppStatus('idle');
     setLogs([]);
@@ -571,6 +577,7 @@ export default function EngineView() {
     setCamReport(null);
     setDetectedParams(null);
     setForensicsReport(null);
+    setOsintData(null);
     setProgress(0);
 
     const addLog = (tag, msg) => {
@@ -678,6 +685,7 @@ export default function EngineView() {
         decision_rationale: camData.decision_rationale || 'Analysis complete.'
       });
       setFinalScore(cappedScore);
+      setOsintData(researchData);
       setProgress(100);
       setAppStatus('complete');
       addLog('DATABASE', 'Results saved successfully.');
@@ -1408,18 +1416,47 @@ export default function EngineView() {
                         {/* Tab 3: OSINT litigation Registry */}
                         {activeTab === 'OSINT REGISTRY' && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                            <div style={{ padding: '0.75rem', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '2px' }}>
-                              <span style={{ fontSize: '10px', fontWeight: 800, color: '#2c3540', fontFamily: 'monospace' }}>[MCA] MINISTRY_OF_CORPORATE_AFFAIRS_REGISTRY</span>
-                              <p style={{ margin: '4px 0 0 0', color: '#506070', lineHeight: '1.4' }}>
-                                Compliance filings and registration records matched. Entity active under MCA records with no debt defaults logged in corporate insolvencies.
-                              </p>
-                            </div>
-                            <div style={{ padding: '0.75rem', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '2px' }}>
-                              <span style={{ fontSize: '10px', fontWeight: 800, color: '#2c3540', fontFamily: 'monospace' }}>[OSINT] INDIAN_COURTS_INDEX_SEARCH</span>
-                              <p style={{ margin: '4px 0 0 0', color: '#506070', lineHeight: '1.4' }}>
-                                Scraped public databases for High Court and NCLT litigations. No active debt declarations or pending credit recovery lawsuits found for "{detectedParams.company}".
-                              </p>
-                            </div>
+                            {osintData ? (
+                              <>
+                                <div style={{ padding: '0.75rem', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '2px' }}>
+                                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#2c3540', fontFamily: 'monospace' }}>[LITIGATION] INDIAN_COURTS_INDEX_SEARCH</span>
+                                  {osintData.litigation_signals && osintData.litigation_signals.length > 0 ? (
+                                    <ul style={{ margin: '8px 0 0 16px', color: '#506070', lineHeight: '1.4', padding: 0 }}>
+                                      {osintData.litigation_signals.map((sig, i) => <li key={i}>{sig}</li>)}
+                                    </ul>
+                                  ) : (
+                                    <p style={{ margin: '4px 0 0 0', color: '#506070', lineHeight: '1.4' }}>No active debt declarations or pending credit recovery lawsuits found.</p>
+                                  )}
+                                </div>
+                                <div style={{ padding: '0.75rem', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '2px' }}>
+                                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#2c3540', fontFamily: 'monospace' }}>[NEWS] COMPANY_WEB_CRAWL</span>
+                                  {osintData.company_news && osintData.company_news.length > 0 ? (
+                                    <ul style={{ margin: '8px 0 0 16px', color: '#506070', lineHeight: '1.4', padding: 0 }}>
+                                      {osintData.company_news.map((news, i) => <li key={i}>{news}</li>)}
+                                    </ul>
+                                  ) : (
+                                    <p style={{ margin: '4px 0 0 0', color: '#506070', lineHeight: '1.4' }}>No significant company news or red flags found.</p>
+                                  )}
+                                </div>
+                                <div style={{ padding: '0.75rem', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '2px' }}>
+                                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#2c3540', fontFamily: 'monospace' }}>[SECTOR] RBI_HEADWINDS_MONITOR</span>
+                                  {osintData.sector_headwinds && osintData.sector_headwinds.length > 0 ? (
+                                    <ul style={{ margin: '8px 0 0 16px', color: '#506070', lineHeight: '1.4', padding: 0 }}>
+                                      {osintData.sector_headwinds.map((alert, i) => <li key={i}>{alert}</li>)}
+                                    </ul>
+                                  ) : (
+                                    <p style={{ margin: '4px 0 0 0', color: '#506070', lineHeight: '1.4' }}>No major regulatory or sector headwinds detected.</p>
+                                  )}
+                                </div>
+                              </>
+                            ) : (
+                              <div style={{ padding: '0.75rem', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '2px' }}>
+                                <span style={{ fontSize: '10px', fontWeight: 800, color: '#2c3540', fontFamily: 'monospace' }}>[OSINT] PENDING</span>
+                                <p style={{ margin: '4px 0 0 0', color: '#506070', lineHeight: '1.4' }}>
+                                  Waiting for OSINT data to be processed...
+                                </p>
+                              </div>
+                            )}
                           </div>
                         )}
 
