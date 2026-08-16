@@ -533,7 +533,6 @@ export default function EngineView() {
   };
 
   const handleSelectedFile = (selected) => {
-  const handleSelectedFile = (selected) => {
     if (selected) {
       setFile(selected);
       setDetectedParams(null);
