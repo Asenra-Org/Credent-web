@@ -171,7 +171,7 @@ export default function EngineView() {
     return extractedFiles;
   };
 
-  const addFilesToStagingQueue = (filesList) => {
+  const addFilesToStagingQueue = (filesList, autoStart = false) => {
     if (!filesList || filesList.length === 0) return;
 
     const newQueueItems = filesList.map((item, idx) => {
@@ -183,7 +183,7 @@ export default function EngineView() {
         name: f.name,
         path: path,
         size: f.size,
-        status: 'staged', // staged | queued | processing | completed | failed
+        status: 'staged',
         progress: 0,
         step: 'STAGED',
         errorMessage: '',
@@ -191,15 +191,23 @@ export default function EngineView() {
       };
     });
 
-    setQueueItems(prev => [...prev, ...newQueueItems]);
-    if (!file && newQueueItems.length > 0) {
-      setFile(newQueueItems[0].file);
-    }
+    setQueueItems(prev => {
+      const updated = [...prev, ...newQueueItems];
+      // Auto-start the queue immediately if pipeline is idle and caller requested it
+      if (autoStart && !isProcessingQueue) {
+        // Use setTimeout so state settles before runAllQueueTasks reads it
+        setTimeout(() => runAllQueueTasks(newQueueItems), 0);
+      }
+      return updated;
+    });
 
     const timestamp = new Date().toLocaleTimeString();
+    const queuedMsg = autoStart && isProcessingQueue
+      ? `Queued ${newQueueItems.length} file(s) — will run after current case finishes.`
+      : `Staged ${newQueueItems.length} file(s) into ingestion queue.`;
     setLogs(prev => [
       ...prev,
-      `[${timestamp}] QUEUE: Staged ${newQueueItems.length} file(s) into ingestion queue.`
+      `[${timestamp}] QUEUE: ${queuedMsg}`
     ]);
   };
 
@@ -211,18 +219,20 @@ export default function EngineView() {
       const extracted = await extractFilesFromDataTransfer(e.dataTransfer);
       if (extracted.length === 0) return;
 
-      // A folder drop gives files a relative path containing '/' (e.g. "FolderName/file.pdf").
-      // Always route folder drops through the queue, even if the folder contains only one file.
       const isFromFolder = extracted.some(item => (item.path || '').includes('/'));
+      const isPipelineActive = isProcessingQueue || appStatus === 'processing';
 
-      if (!isFromFolder && extracted.length === 1) {
-        // Bare single-file drop: bypass queue — use the existing direct terminal flow
+      if (!isFromFolder && extracted.length === 1 && !isPipelineActive) {
+        // Single bare file, nothing running → run directly with full progress bar
         const singleFile = extracted[0].file || extracted[0];
         resetState();
-        setFile(singleFile);
-        setTimeout(() => runUnderwritingPipeline(), 0);
+        runUnderwritingPipeline(singleFile);
+      } else if (!isFromFolder && extracted.length === 1 && isPipelineActive) {
+        // Single file but pipeline is busy → add to queue, run after current finishes
+        addFilesToStagingQueue(extracted, false);
       } else {
-        addFilesToStagingQueue(extracted);
+        // Folder or multi-file: stage into queue, auto-start if idle
+        addFilesToStagingQueue(extracted, !isPipelineActive);
       }
     }
   };
@@ -241,22 +251,26 @@ export default function EngineView() {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      if (e.target.files.length === 1) {
-        // ASE-59: Single file — bypass queue, run the direct terminal pipeline immediately.
-        // This applies regardless of whether the file came from the picker or drag/drop.
+      const isPipelineActive = isProcessingQueue || appStatus === 'processing';
+
+      if (e.target.files.length === 1 && !isPipelineActive) {
+        // Single file, pipeline idle → run directly with full progress bar
         const singleFile = e.target.files[0];
         resetState();
-        setFile(singleFile);
-        setTimeout(() => runUnderwritingPipeline(), 0);
+        runUnderwritingPipeline(singleFile);
+      } else if (e.target.files.length === 1 && isPipelineActive) {
+        // Single file but pipeline is busy → queue it, run after current finishes
+        const filesArray = [{ file: e.target.files[0], name: e.target.files[0].name, path: e.target.files[0].name, size: e.target.files[0].size }];
+        addFilesToStagingQueue(filesArray, false);
       } else {
-        // 2+ files (or folder): stage into queue for batch processing.
+        // Multiple files / folder picker → queue, auto-start if idle
         const filesArray = Array.from(e.target.files).map(f => ({
           file: f,
           name: f.name,
           path: f.webkitRelativePath || f.name,
           size: f.size
         }));
-        addFilesToStagingQueue(filesArray);
+        addFilesToStagingQueue(filesArray, !isPipelineActive);
       }
       e.target.value = '';
     }
@@ -543,8 +557,14 @@ export default function EngineView() {
     setLogs([]);
   };
 
-  const runUnderwritingPipeline = async () => {
-    if (!file) return;
+  // fileArg: pass the File object directly to avoid stale state closure.
+  // When called from handleFileChange/handleDrop, React's setFile may not have
+  // committed yet, so we always prefer the explicit argument.
+  const runUnderwritingPipeline = async (fileArg) => {
+    const targetFile = fileArg || file;
+    if (!targetFile) return;
+    // Sync the file state so the rest of the UI (filename display etc.) updates
+    if (fileArg && fileArg !== file) setFile(fileArg);
 
     setAppStatus('processing');
     setErrorMessage('');
@@ -560,11 +580,11 @@ export default function EngineView() {
 
     addLog('SYSTEM', 'Starting appraisal pipeline.');
     setProgress(10);
-    addLog('INGEST', `Uploading "${file.name}"...`);
+    addLog('INGEST', `Uploading "${targetFile.name}"...`);
 
     try {
-      const fd = new FormData(); 
-      fd.append('file', file);
+      const fd = new FormData();
+      fd.append('file', targetFile);
       const res1 = await api.post('documents/ingest/pdf', fd);
 
       if (res1.data.status === 'error' || !res1.data.ai_analysis) {
