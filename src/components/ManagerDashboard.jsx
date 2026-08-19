@@ -190,9 +190,9 @@ export default function ManagerDashboard({ theme, onExit }) {
   });
 
   const getStatusColor = (status) => {
-    if (status === 'APPROVE') return 'var(--emerald)';
-    if (status === 'REJECT') return 'var(--rose)';
-    return 'var(--teal)';
+    if (status === 'APPROVE') return '#18181b';
+    if (status === 'REJECT') return '#71717a';
+    return '#18181b';
   };
 
   // AUTO-SYNC POLLING (Industry-standard real-time pulse)
@@ -204,12 +204,12 @@ export default function ManagerDashboard({ theme, onExit }) {
 
   // SKELETON COMPONENTS
   const SkeletonStat = () => (
-    <div style={{ height: '80px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', animation: 'pulse 1.5s infinite linear', marginBottom: '1rem' }}></div>
+    <div style={{ height: '80px', background: 'var(--bg-secondary)', borderRadius: '0px', animation: 'pulse 1.5s infinite linear', marginBottom: '1rem' }}></div>
   );
 
   const SkeletonRow = () => (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1rem', padding: '1rem', borderBottom: '1px solid var(--border-subtle)', animation: 'pulse 1.5s infinite linear' }}>
-      {[...Array(7)].map((_, i) => <div key={i} style={{ height: '14px', background: 'var(--bg-secondary)', borderRadius: '4px' }}></div>)}
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1rem', padding: '1rem', borderBottom: '1px solid #e4e4e7', animation: 'pulse 1.5s infinite linear' }}>
+      {[...Array(7)].map((_, i) => <div key={i} style={{ height: '14px', background: 'var(--bg-secondary)', borderRadius: '0px' }}></div>)}
     </div>
   );
 
@@ -228,15 +228,15 @@ export default function ManagerDashboard({ theme, onExit }) {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onExit}
-            style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-default)', color: 'var(--text-primary)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            style={{ background: 'var(--bg-primary)', border: '1px solid #e4e4e7', color: '#09090b', padding: '0.5rem 1rem', borderRadius: '0px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
             <ArrowLeft size={16} /> Exit Terminal
           </motion.button>
-          <div className="hud-brand" style={{ fontSize: '1.5rem' }}><ShieldCheck color="var(--teal)" size={28} /> Institutional Manager</div>
+          <div className="hud-brand" style={{ fontSize: '1.5rem' }}><ShieldCheck color="#18181b" size={28} /> Institutional Manager</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-           <div style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: loading ? 'var(--amber)' : 'var(--teal)', boxShadow: loading ? '0 0 5px var(--amber)' : '0 0 5px var(--teal)' }}></div>
+           <div style={{ color: '#71717a', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: loading ? '#71717a' : '#18181b', boxShadow: loading ? '0 0 5px #71717a' : '0 0 5px #18181b' }}></div>
               {loading ? 'Cloud Syncing...' : 'Live Cloud Pulse'}
            </div>
         </div>
@@ -256,9 +256,9 @@ export default function ManagerDashboard({ theme, onExit }) {
                 </>
               ) : (
                 <>
-                  <StatItem label="Total Applications" value={appraisals.length} icon={<FileText size={18} />} color="var(--teal)" />
-                  <StatItem label="Average Risk Score" value={averageRisk} icon={<BarChart3 size={18} />} color="var(--emerald)" />
-                  <StatItem label="Flagged for Manual Review" value={flaggedCount} icon={<AlertTriangle size={18} />} color="var(--rose)" />
+                  <StatItem label="Total Applications" value={appraisals.length} icon={<FileText size={18} />} color="#18181b" />
+                  <StatItem label="Average Risk Score" value={averageRisk} icon={<BarChart3 size={18} />} color="#18181b" />
+                  <StatItem label="Flagged for Manual Review" value={flaggedCount} icon={<AlertTriangle size={18} />} color="#71717a" />
                 </>
               )}
             </div>
@@ -268,12 +268,12 @@ export default function ManagerDashboard({ theme, onExit }) {
             <div className="panel-title"><Filter size={16} /> Global Filters</div>
             <div style={{ marginTop: '1rem' }}>
               <div className="search-bar" style={{ marginBottom: '1rem' }}>
-                <Search size={16} color="var(--text-tertiary)" />
+                <Search size={16} color="#71717a" />
                 <input
                   placeholder="Search entities..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ background: 'none', border: 'none', color: 'var(--text-primary)', width: '100%', fontSize: '0.875rem' }}
+                  style={{ background: 'none', border: 'none', color: '#09090b', width: '100%', fontSize: '0.875rem' }}
                 />
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -283,12 +283,12 @@ export default function ManagerDashboard({ theme, onExit }) {
                     onClick={() => setFilterStatus(status)}
                     style={{
                       padding: '0.4rem 0.75rem',
-                      borderRadius: 'var(--radius-md)',
+                      borderRadius: '0px',
                       fontSize: '0.75rem',
                       fontWeight: '700',
-                      border: '1px solid var(--border-default)',
+                      border: '1px solid #e4e4e7',
                       background: filterStatus === status ? 'var(--navy-soft)' : 'var(--bg-primary)',
-                      color: filterStatus === status ? 'var(--teal)' : 'var(--text-secondary)',
+                      color: filterStatus === status ? '#18181b' : '#3f3f46',
                       cursor: 'pointer'
                     }}
                   >
@@ -302,22 +302,22 @@ export default function ManagerDashboard({ theme, onExit }) {
 
         {/* MAIN FEED */}
         <div className="panel" style={{ padding: '0' }}>
-          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ padding: '1.5rem', borderBottom: '1px solid #e4e4e7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div className="panel-title" style={{ margin: 0 }}><History size={16} /> Application Ledger (Cloud Sync)</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--emerald)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--emerald)' }} /> Supabase Real-time Active
+            <div style={{ fontSize: '0.75rem', color: '#18181b', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#18181b' }} /> Supabase Real-time Active
             </div>
           </div>
 
           <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
               <thead>
-                <tr style={{ background: 'var(--bg-secondary)', textAlign: 'left', borderBottom: '1px solid var(--border-subtle)' }}>
-                  <th style={{ padding: '1rem 1.5rem', color: 'var(--text-tertiary)', fontWeight: '600' }}>Entity Name</th>
-                  <th style={{ padding: '1rem 1.5rem', color: 'var(--text-tertiary)', fontWeight: '600' }}>AI Score</th>
-                  <th style={{ padding: '1rem 1.5rem', color: 'var(--text-tertiary)', fontWeight: '600' }}>Decision</th>
-                  <th style={{ padding: '1rem 1.5rem', color: 'var(--text-tertiary)', fontWeight: '600' }}>Recommended</th>
-                  <th style={{ padding: '1rem 1.5rem', color: 'var(--text-tertiary)', fontWeight: '600' }}>Date</th>
+                <tr style={{ background: 'var(--bg-secondary)', textAlign: 'left', borderBottom: '1px solid #e4e4e7' }}>
+                  <th style={{ padding: '1rem 1.5rem', color: '#71717a', fontWeight: '600' }}>Entity Name</th>
+                  <th style={{ padding: '1rem 1.5rem', color: '#71717a', fontWeight: '600' }}>AI Score</th>
+                  <th style={{ padding: '1rem 1.5rem', color: '#71717a', fontWeight: '600' }}>Decision</th>
+                  <th style={{ padding: '1rem 1.5rem', color: '#71717a', fontWeight: '600' }}>Recommended</th>
+                  <th style={{ padding: '1rem 1.5rem', color: '#71717a', fontWeight: '600' }}>Date</th>
                   <th style={{ padding: '1rem 1.5rem', textAlign: 'right' }}></th>
                 </tr>
               </thead>
@@ -337,18 +337,18 @@ export default function ManagerDashboard({ theme, onExit }) {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        style={{ borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer' }}
+                        style={{ borderBottom: '1px solid #e4e4e7', cursor: 'pointer' }}
                         className="ledger-row"
                       >
                       <td style={{ padding: '1rem 1.5rem', fontWeight: '700' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {app.integrity_flags?.forensics?.is_suspicious && <ShieldAlert size={16} color="var(--rose)" title="Photoshop/Modification Detected" />}
+                          {app.integrity_flags?.forensics?.is_suspicious && <ShieldAlert size={16} color="#71717a" title="Photoshop/Modification Detected" />}
                           {app.company_name}
                         </div>
                       </td>
                       <td style={{ padding: '1rem 1.5rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '40px', height: '4px', background: 'var(--border-default)', borderRadius: '2px', overflowY: 'auto' }}>
+                          <div style={{ width: '40px', height: '4px', background: '#e4e4e7', borderRadius: '0px', overflowY: 'auto' }}>
                             <div style={{ height: '100%', width: `${app.adjusted_score}%`, background: getStatusColor(app.decision) }} />
                           </div>
                           <span style={{ fontWeight: '800' }}>{app.adjusted_score}</span>
@@ -357,15 +357,15 @@ export default function ManagerDashboard({ theme, onExit }) {
                       <td style={{ padding: '1rem 1.5rem' }}>
                         <span style={{
                           padding: '0.25rem 0.5rem',
-                          borderRadius: '4px',
+                          borderRadius: '0px',
                           background: `${getStatusColor(app.decision)}20`,
                           color: getStatusColor(app.decision),
                           fontSize: '0.6875rem',
                           fontWeight: '800'
                         }}>{app.decision}</span>
                       </td>
-                      <td style={{ padding: '1rem 1.5rem', color: 'var(--text-secondary)' }}>{app.recommended_loan_amount}</td>
-                      <td style={{ padding: '1rem 1.5rem', color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>
+                      <td style={{ padding: '1rem 1.5rem', color: '#3f3f46' }}>{app.recommended_loan_amount}</td>
+                      <td style={{ padding: '1rem 1.5rem', color: '#71717a', fontSize: '0.75rem' }}>
                         {new Date(app.created_at).toLocaleDateString()}
                       </td>
                       <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
@@ -401,18 +401,18 @@ export default function ManagerDashboard({ theme, onExit }) {
             exit={{ opacity: 0, x: 100 }}
             style={{
               position: 'fixed', top: 0, right: 0, width: '480px', maxWidth: '100vw', height: '100vh',
-              background: 'var(--bg-primary)', borderLeft: '1px solid var(--border-default)',
-              boxShadow: '-10px 0 30px rgba(0,0,0,0.5)', zIndex: 1000, padding: '1.75rem',
+              background: 'var(--bg-primary)', borderLeft: '1px solid #e4e4e7',
+              boxShadow: 'none', zIndex: 1000, padding: '1.75rem',
               display: 'flex', flexDirection: 'column'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <div style={{ fontSize: '1.25rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ShieldCheck color="var(--teal)" /> Decision Center
+                <ShieldCheck color="#18181b" /> Decision Center
               </div>
               <button
                 onClick={() => setSelectedAppraisal(null)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', padding: '4px' }}
+                style={{ background: 'none', border: 'none', color: '#71717a', cursor: 'pointer', padding: '4px' }}
                 aria-label="Close Decision Center"
               >
                 <X size={22} />
@@ -420,11 +420,11 @@ export default function ManagerDashboard({ theme, onExit }) {
             </div>
 
             {/* Entity Quick Header Banner */}
-            <div className="panel" style={{ padding: '1.25rem', marginBottom: '1rem', border: selectedAppraisal.integrity_flags?.forensics?.is_suspicious ? '1px solid var(--rose)' : 'none' }}>
+            <div className="panel" style={{ padding: '1.25rem', marginBottom: '1rem', border: selectedAppraisal.integrity_flags?.forensics?.is_suspicious ? '1px solid #71717a' : 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>Selected Entity</div>
+                <div style={{ fontSize: '0.6875rem', color: '#71717a', textTransform: 'uppercase', fontWeight: 700 }}>Selected Entity</div>
                 {selectedAppraisal.integrity_flags?.forensics && (
-                    <div style={{ fontSize: '0.625rem', padding: '2px 6px', borderRadius: '4px', background: selectedAppraisal.integrity_flags.forensics.is_suspicious ? 'var(--rose)' : 'var(--emerald)', color: 'white', fontWeight: '800' }}>
+                    <div style={{ fontSize: '0.625rem', padding: '2px 6px', borderRadius: '0px', background: selectedAppraisal.integrity_flags.forensics.is_suspicious ? '#71717a' : '#18181b', color: 'white', fontWeight: '800' }}>
                         {selectedAppraisal.integrity_flags.forensics.is_suspicious ? 'SUSPICIOUS' : 'SECURE'}
                     </div>
                 )}
@@ -432,22 +432,22 @@ export default function ManagerDashboard({ theme, onExit }) {
               <div style={{ fontSize: '1.35rem', fontWeight: '800', marginTop: '0.25rem' }}>{selectedAppraisal.company_name}</div>
               <div style={{ marginTop: '0.5rem', display: 'flex', gap: '1.5rem' }}>
                 <div>
-                  <div style={{ fontSize: '0.625rem', color: 'var(--text-tertiary)', fontWeight: 700 }}>SECTOR</div>
+                  <div style={{ fontSize: '0.625rem', color: '#71717a', fontWeight: 700 }}>SECTOR</div>
                   <div style={{ fontSize: '0.8125rem', fontWeight: '700' }}>{selectedAppraisal.sector || 'Commercial'}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.625rem', color: 'var(--text-tertiary)', fontWeight: 700 }}>APPLICATION ID</div>
+                  <div style={{ fontSize: '0.625rem', color: '#71717a', fontWeight: 700 }}>APPLICATION ID</div>
                   <div style={{ fontSize: '0.8125rem', fontWeight: '700', fontFamily: 'var(--font-mono, monospace)' }}>{selectedAppraisal.id || selectedAppraisal.appraisal_id || 'N/A'}</div>
                 </div>
               </div>
 
               {selectedAppraisal.integrity_flags?.forensics?.is_suspicious && (
-                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(244, 63, 94, 0.1)', borderRadius: 'var(--radius-md)', borderLeft: '3px solid var(--rose)' }}>
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--rose)', fontSize: '0.6875rem', fontWeight: '800' }}>
+                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#f4f4f5', borderRadius: '0px', borderLeft: '3px solid #71717a' }}>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#71717a', fontSize: '0.6875rem', fontWeight: '800' }}>
                       <AlertTriangle size={12} /> FORENSIC TAMPER ALERT
                    </div>
                    {selectedAppraisal.integrity_flags.forensics.flags.map((f, i) => (
-                      <div key={i} style={{ fontSize: '0.625rem', color: 'var(--text-secondary)', marginTop: '2px' }}>- {f}</div>
+                      <div key={i} style={{ fontSize: '0.625rem', color: '#3f3f46', marginTop: '2px' }}>- {f}</div>
                    ))}
                 </div>
               )}
@@ -463,7 +463,7 @@ export default function ManagerDashboard({ theme, onExit }) {
               />
             </div>
 
-            <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-default)', fontSize: '0.625rem', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+            <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid #e4e4e7', fontSize: '0.625rem', color: '#71717a', textAlign: 'center' }}>
                <Zap size={10} /> Cloud-Secure Synchronization Active • Maker-Checker Audit Log
             </div>
           </motion.div>
@@ -476,12 +476,12 @@ export default function ManagerDashboard({ theme, onExit }) {
 function StatItem({ label, value, icon, color }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-      <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: `${color}15`, color, display: 'flex', alignItems: 'center', justifyCenter: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '40px', height: '40px', borderRadius: '0px', background: `${color}15`, color, display: 'flex', alignItems: 'center', justifyCenter: 'center', justifyContent: 'center' }}>
         {icon}
       </div>
       <div>
-        <div style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)', fontWeight: '700', textTransform: 'uppercase' }}>{label}</div>
-        <div style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-primary)' }}>{value}</div>
+        <div style={{ fontSize: '0.6875rem', color: '#71717a', fontWeight: '700', textTransform: 'uppercase' }}>{label}</div>
+        <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#09090b' }}>{value}</div>
       </div>
     </div>
   );

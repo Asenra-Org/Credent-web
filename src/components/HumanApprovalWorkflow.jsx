@@ -62,12 +62,12 @@ export const getRiskLevel = (score, explicitLevel) => {
 export const getRiskLevelColor = (level) => {
   const l = String(level).toUpperCase();
   if (l.includes('LOW')) {
-    return { bg: 'rgba(16, 185, 129, 0.1)', color: 'var(--emerald, #10b981)', border: 'rgba(16, 185, 129, 0.3)', label: 'LOW RISK' };
+    return { bg: '#f4f4f5', color: '#18181b', border: 'rgba(16, 185, 129, 0.3)', label: 'LOW RISK' };
   }
   if (l.includes('HIGH')) {
-    return { bg: 'rgba(239, 68, 68, 0.1)', color: 'var(--rose, #ef4444)', border: 'rgba(239, 68, 68, 0.3)', label: 'HIGH RISK' };
+    return { bg: '#f4f4f5', color: '#71717a', border: 'rgba(239, 68, 68, 0.3)', label: 'HIGH RISK' };
   }
-  return { bg: 'rgba(245, 158, 11, 0.1)', color: 'var(--amber, #f59e0b)', border: 'rgba(245, 158, 11, 0.3)', label: 'MODERATE RISK' };
+  return { bg: '#f4f4f5', color: '#71717a', border: 'rgba(245, 158, 11, 0.3)', label: 'MODERATE RISK' };
 };
 
 /**
@@ -251,9 +251,9 @@ export default function HumanApprovalWorkflow({
   };
 
   const getActionColor = (action) => {
-    if (action === 'APPROVE') return 'var(--emerald, #10b981)';
-    if (action === 'REJECT') return 'var(--rose, #ef4444)';
-    return 'var(--amber, #f59e0b)';
+    if (action === 'APPROVE') return '#18181b';
+    if (action === 'REJECT') return '#71717a';
+    return '#71717a';
   };
 
   return (
@@ -266,10 +266,10 @@ export default function HumanApprovalWorkflow({
           animate={{ opacity: 1, y: 0 }}
           style={{
             padding: '0.75rem 1rem',
-            borderRadius: 'var(--radius-md, 8px)',
-            background: localFeedback.type === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-            border: `1px solid ${localFeedback.type === 'success' ? 'var(--emerald, #10b981)' : 'var(--rose, #ef4444)'}`,
-            color: localFeedback.type === 'success' ? 'var(--emerald, #10b981)' : 'var(--rose, #ef4444)',
+            borderRadius: '0px',
+            background: localFeedback.type === 'success' ? '#f4f4f5' : '#f4f4f5',
+            border: `1px solid ${localFeedback.type === 'success' ? '#18181b' : '#71717a'}`,
+            color: localFeedback.type === 'success' ? '#18181b' : '#71717a',
             fontSize: '0.75rem',
             fontWeight: 700,
             display: 'flex',
@@ -296,9 +296,9 @@ export default function HumanApprovalWorkflow({
       <div
         className="card-modern ai-risk-section"
         style={{
-          background: 'var(--bg-secondary, #f8fafc)',
-          border: '1px solid var(--border-default, #cbd5e1)',
-          borderRadius: 'var(--radius-md, 8px)',
+          background: '#f9fafb',
+          border: '1px solid #e4e4e7',
+          borderRadius: '0px',
           padding: '1.25rem',
           position: 'relative'
         }}
@@ -309,9 +309,9 @@ export default function HumanApprovalWorkflow({
             <div style={{
               width: '28px',
               height: '28px',
-              borderRadius: '6px',
-              background: 'rgba(14, 165, 233, 0.15)',
-              color: 'var(--teal, #0ea5e9)',
+              borderRadius: '0px',
+              background: '#f4f4f5',
+              color: '#18181b',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -319,10 +319,10 @@ export default function HumanApprovalWorkflow({
               <Bot size={16} />
             </div>
             <div>
-              <div style={{ fontSize: '0.8125rem', fontWeight: 800, color: 'var(--text-primary, #0f172a)', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#09090b', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                 AI Risk Assessment
               </div>
-              <div style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary, #64748b)' }}>
+              <div style={{ fontSize: '0.6875rem', color: '#71717a' }}>
                 Machine intelligence risk model
               </div>
             </div>
@@ -333,9 +333,9 @@ export default function HumanApprovalWorkflow({
               fontSize: '0.625rem',
               fontWeight: 800,
               padding: '3px 8px',
-              borderRadius: '4px',
-              background: 'rgba(14, 165, 233, 0.12)',
-              color: 'var(--teal, #0ea5e9)',
+              borderRadius: '0px',
+              background: '#f4f4f5',
+              color: '#18181b',
               border: '1px solid rgba(14, 165, 233, 0.3)',
               textTransform: 'uppercase',
               letterSpacing: '0.04em',
@@ -358,33 +358,33 @@ export default function HumanApprovalWorkflow({
         }}>
           {/* 1. AI Risk Score */}
           <div style={{
-            background: 'var(--bg-primary, #ffffff)',
-            border: '1px solid var(--border-default, #cbd5e1)',
-            borderRadius: '6px',
+            background: '#ffffff',
+            border: '1px solid #e4e4e7',
+            borderRadius: '0px',
             padding: '0.75rem'
           }}>
-            <div style={{ fontSize: '0.625rem', color: 'var(--text-tertiary, #64748b)', fontWeight: 700, textTransform: 'uppercase' }}>
+            <div style={{ fontSize: '0.625rem', color: '#71717a', fontWeight: 700, textTransform: 'uppercase' }}>
               AI Risk Score
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginTop: '4px' }}>
-              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-primary, #0f172a)', fontFamily: 'var(--font-mono, monospace)' }}>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#09090b', fontFamily: 'var(--font-mono, monospace)' }}>
                 {aiScore}
               </span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary, #64748b)' }}>/ 100</span>
+              <span style={{ fontSize: '0.75rem', color: '#71717a' }}>/ 100</span>
             </div>
-            <div style={{ width: '100%', height: '4px', background: 'var(--border-default, #cbd5e1)', borderRadius: '2px', marginTop: '6px', overflow: 'hidden' }}>
+            <div style={{ width: '100%', height: '4px', background: '#e4e4e7', borderRadius: '0px', marginTop: '6px', overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${Math.min(100, Math.max(0, aiScore))}%`, background: riskLevelTheme.color }} />
             </div>
           </div>
 
           {/* 2. Risk Level */}
           <div style={{
-            background: 'var(--bg-primary, #ffffff)',
-            border: '1px solid var(--border-default, #cbd5e1)',
-            borderRadius: '6px',
+            background: '#ffffff',
+            border: '1px solid #e4e4e7',
+            borderRadius: '0px',
             padding: '0.75rem'
           }}>
-            <div style={{ fontSize: '0.625rem', color: 'var(--text-tertiary, #64748b)', fontWeight: 700, textTransform: 'uppercase' }}>
+            <div style={{ fontSize: '0.625rem', color: '#71717a', fontWeight: 700, textTransform: 'uppercase' }}>
               Risk Level
             </div>
             <div style={{ marginTop: '6px' }}>
@@ -392,13 +392,13 @@ export default function HumanApprovalWorkflow({
                 display: 'inline-flex',
                 alignItems: 'center',
                 padding: '2px 8px',
-                borderRadius: '4px',
+                borderRadius: '0px',
                 background: riskLevelTheme.bg,
                 color: riskLevelTheme.color,
                 border: `1px solid ${riskLevelTheme.border}`,
                 fontSize: '0.75rem',
                 fontWeight: 800,
-                letterSpacing: '0.02em'
+                letterSpacing: '0.05em'
               }}>
                 {riskLevelStr}
               </span>
@@ -407,23 +407,23 @@ export default function HumanApprovalWorkflow({
 
           {/* 3. AI Recommendation (Advisory) */}
           <div style={{
-            background: 'var(--bg-primary, #ffffff)',
-            border: '1px solid var(--border-default, #cbd5e1)',
-            borderRadius: '6px',
+            background: '#ffffff',
+            border: '1px solid #e4e4e7',
+            borderRadius: '0px',
             padding: '0.75rem'
           }}>
-            <div style={{ fontSize: '0.625rem', color: 'var(--text-tertiary, #64748b)', fontWeight: 700, textTransform: 'uppercase' }}>
+            <div style={{ fontSize: '0.625rem', color: '#71717a', fontWeight: 700, textTransform: 'uppercase' }}>
               AI Recommendation
             </div>
             <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{
                 padding: '2px 8px',
-                borderRadius: '4px',
-                background: aiRecNorm === 'APPROVE' ? 'rgba(16, 185, 129, 0.12)' : aiRecNorm === 'REJECT' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(245, 158, 11, 0.12)',
-                color: aiRecNorm === 'APPROVE' ? 'var(--emerald, #10b981)' : aiRecNorm === 'REJECT' ? 'var(--rose, #ef4444)' : 'var(--amber, #f59e0b)',
+                borderRadius: '0px',
+                background: aiRecNorm === 'APPROVE' ? '#f4f4f5' : aiRecNorm === 'REJECT' ? '#f4f4f5' : '#f4f4f5',
+                color: aiRecNorm === 'APPROVE' ? '#18181b' : aiRecNorm === 'REJECT' ? '#71717a' : '#71717a',
                 fontSize: '0.75rem',
                 fontWeight: 900,
-                letterSpacing: '0.02em'
+                letterSpacing: '0.05em'
               }}>
                 {rawAiRec}
               </span>
@@ -432,15 +432,15 @@ export default function HumanApprovalWorkflow({
 
           {/* 4. Confidence */}
           <div style={{
-            background: 'var(--bg-primary, #ffffff)',
-            border: '1px solid var(--border-default, #cbd5e1)',
-            borderRadius: '6px',
+            background: '#ffffff',
+            border: '1px solid #e4e4e7',
+            borderRadius: '0px',
             padding: '0.75rem'
           }}>
-            <div style={{ fontSize: '0.625rem', color: 'var(--text-tertiary, #64748b)', fontWeight: 700, textTransform: 'uppercase' }}>
+            <div style={{ fontSize: '0.625rem', color: '#71717a', fontWeight: 700, textTransform: 'uppercase' }}>
               Confidence Level
             </div>
-            <div style={{ marginTop: '4px', fontSize: '1.125rem', fontWeight: 800, color: 'var(--text-primary, #0f172a)', fontFamily: 'var(--font-mono, monospace)' }}>
+            <div style={{ marginTop: '4px', fontSize: '1.125rem', fontWeight: 800, color: '#09090b', fontFamily: 'var(--font-mono, monospace)' }}>
               {confidenceStr}
             </div>
           </div>
@@ -448,17 +448,17 @@ export default function HumanApprovalWorkflow({
 
         {/* Risk Factors / Explanation */}
         <div style={{ marginTop: '0.75rem' }}>
-          <div style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--text-secondary, #334155)', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#3f3f46', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
             Risk Factors & Explanation
           </div>
           
           <div style={{
-            background: 'var(--bg-primary, #ffffff)',
-            border: '1px solid var(--border-default, #cbd5e1)',
-            borderRadius: '6px',
+            background: '#ffffff',
+            border: '1px solid #e4e4e7',
+            borderRadius: '0px',
             padding: '0.75rem',
             fontSize: '0.75rem',
-            color: 'var(--text-secondary, #334155)',
+            color: '#3f3f46',
             lineHeight: 1.5,
             marginBottom: '0.5rem'
           }}>
@@ -472,14 +472,14 @@ export default function HumanApprovalWorkflow({
                   key={idx}
                   style={{
                     fontSize: '0.6875rem',
-                    color: 'var(--text-tertiary, #64748b)',
+                    color: '#71717a',
                     display: 'flex',
                     alignItems: 'flex-start',
                     gap: '6px',
                     lineHeight: 1.4
                   }}
                 >
-                  <span style={{ color: 'var(--teal, #0ea5e9)', fontWeight: 'bold' }}>•</span>
+                  <span style={{ color: '#18181b', fontWeight: 'bold' }}>•</span>
                   <span>{factor}</span>
                 </div>
               ))}
@@ -494,11 +494,11 @@ export default function HumanApprovalWorkflow({
       <div
         className="card-modern officer-authority-section"
         style={{
-          background: 'var(--bg-primary, #ffffff)',
-          border: '1px solid var(--border-default, #cbd5e1)',
-          borderRadius: 'var(--radius-md, 8px)',
+          background: '#ffffff',
+          border: '1px solid #e4e4e7',
+          borderRadius: '0px',
           padding: '1.25rem',
-          boxShadow: 'var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05))'
+          boxShadow: 'none'
         }}
       >
         {/* Section Header */}
@@ -507,9 +507,9 @@ export default function HumanApprovalWorkflow({
             <div style={{
               width: '28px',
               height: '28px',
-              borderRadius: '6px',
-              background: 'rgba(13, 33, 63, 0.1)',
-              color: 'var(--accent-blue, #0d213f)',
+              borderRadius: '0px',
+              background: '#f4f4f5',
+              color: '#18181b',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -517,10 +517,10 @@ export default function HumanApprovalWorkflow({
               <Scale size={16} />
             </div>
             <div>
-              <div style={{ fontSize: '0.8125rem', fontWeight: 800, color: 'var(--text-primary, #0f172a)', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#09090b', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                 Credit Officer Final Decision
               </div>
-              <div style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary, #64748b)' }}>
+              <div style={{ fontSize: '0.6875rem', color: '#71717a' }}>
                 Human approval & underwriting review
               </div>
             </div>
@@ -531,9 +531,9 @@ export default function HumanApprovalWorkflow({
               fontSize: '0.625rem',
               fontWeight: 800,
               padding: '3px 8px',
-              borderRadius: '4px',
+              borderRadius: '0px',
               background: 'rgba(13, 33, 63, 0.08)',
-              color: 'var(--accent-blue, #0d213f)',
+              color: '#18181b',
               border: '1px solid rgba(13, 33, 63, 0.2)',
               textTransform: 'uppercase',
               letterSpacing: '0.04em',
@@ -551,9 +551,9 @@ export default function HumanApprovalWorkflow({
         <div
           style={{
             fontSize: '0.6875rem',
-            color: 'var(--text-secondary, #334155)',
-            background: 'var(--bg-secondary, #f8fafc)',
-            borderLeft: '3px solid var(--teal, #0ea5e9)',
+            color: '#3f3f46',
+            background: '#f9fafb',
+            borderLeft: '3px solid #18181b',
             padding: '0.5rem 0.75rem',
             borderRadius: '0 4px 4px 0',
             marginBottom: '1.25rem',
@@ -569,19 +569,19 @@ export default function HumanApprovalWorkflow({
             style={{
               marginBottom: '1.25rem',
               padding: '0.6rem 0.75rem',
-              borderRadius: '6px',
-              background: 'var(--bg-secondary, #f8fafc)',
-              border: '1px solid var(--border-default, #cbd5e1)',
+              borderRadius: '0px',
+              background: '#f9fafb',
+              border: '1px solid #e4e4e7',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between'
             }}
           >
             <div>
-              <div style={{ fontSize: '0.625rem', color: 'var(--text-tertiary, #64748b)', fontWeight: 700, textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '0.625rem', color: '#71717a', fontWeight: 700, textTransform: 'uppercase' }}>
                 Current Ledger Status
               </div>
-              <div style={{ fontSize: '0.8125rem', fontWeight: 800, color: 'var(--text-primary, #0f172a)', marginTop: '2px' }}>
+              <div style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#09090b', marginTop: '2px' }}>
                 {currentOfficerDecision}
               </div>
             </div>
@@ -590,10 +590,10 @@ export default function HumanApprovalWorkflow({
                 fontSize: '0.625rem',
                 fontWeight: 800,
                 padding: '2px 6px',
-                borderRadius: '4px',
-                background: 'rgba(245, 158, 11, 0.15)',
-                color: 'var(--amber, #f59e0b)',
-                border: '1px solid var(--amber, #f59e0b)'
+                borderRadius: '0px',
+                background: '#f4f4f5',
+                color: '#71717a',
+                border: '1px solid #71717a'
               }}>
                 OVERRIDDEN
               </span>
@@ -611,17 +611,17 @@ export default function HumanApprovalWorkflow({
             onClick={() => handleInitiateAction('APPROVE')}
             style={{
               padding: '0.75rem 1rem',
-              background: 'var(--emerald, #10b981)',
+              background: '#18181b',
               color: '#ffffff',
               border: 'none',
-              borderRadius: 'var(--radius-sm, 4px)',
+              borderRadius: '0px',
               fontWeight: 700,
               fontSize: '0.8125rem',
               cursor: isUpdating ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              boxShadow: '0 1px 2px rgba(16, 185, 129, 0.2)',
+              boxShadow: 'none',
               transition: 'opacity 0.15s, transform 0.1s'
             }}
           >
@@ -639,17 +639,17 @@ export default function HumanApprovalWorkflow({
             onClick={() => handleInitiateAction('REJECT')}
             style={{
               padding: '0.75rem 1rem',
-              background: 'var(--rose, #ef4444)',
+              background: '#71717a',
               color: '#ffffff',
               border: 'none',
-              borderRadius: 'var(--radius-sm, 4px)',
+              borderRadius: '0px',
               fontWeight: 700,
               fontSize: '0.8125rem',
               cursor: isUpdating ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              boxShadow: '0 1px 2px rgba(239, 68, 68, 0.2)',
+              boxShadow: 'none',
               transition: 'opacity 0.15s, transform 0.1s'
             }}
           >
@@ -667,10 +667,10 @@ export default function HumanApprovalWorkflow({
             onClick={() => handleInitiateAction('PENDING')}
             style={{
               padding: '0.75rem 1rem',
-              background: 'var(--bg-primary, #ffffff)',
-              color: 'var(--text-secondary, #334155)',
-              border: '1px solid var(--border-default, #cbd5e1)',
-              borderRadius: 'var(--radius-sm, 4px)',
+              background: '#ffffff',
+              color: '#3f3f46',
+              border: '1px solid #e4e4e7',
+              borderRadius: '0px',
               fontWeight: 700,
               fontSize: '0.8125rem',
               cursor: isUpdating ? 'not-allowed' : 'pointer',
@@ -681,10 +681,10 @@ export default function HumanApprovalWorkflow({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <RotateCcw size={16} color="var(--amber, #f59e0b)" />
+              <RotateCcw size={16} color="#71717a" />
               <span>Send Back for Review</span>
             </div>
-            <span style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary, #64748b)', fontWeight: 500 }}>Hold for Audit</span>
+            <span style={{ fontSize: '0.6875rem', color: '#71717a', fontWeight: 500 }}>Hold for Audit</span>
           </button>
 
         </div>
@@ -693,9 +693,9 @@ export default function HumanApprovalWorkflow({
         <div style={{
           marginTop: '1rem',
           paddingTop: '0.75rem',
-          borderTop: '1px solid var(--border-subtle, #f1f5f9)',
+          borderTop: '1px solid #e4e4e7',
           fontSize: '0.625rem',
-          color: 'var(--text-tertiary, #64748b)',
+          color: '#71717a',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -736,10 +736,10 @@ export default function HumanApprovalWorkflow({
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
               transition={{ duration: 0.2 }}
               style={{
-                background: 'var(--bg-primary, #ffffff)',
-                borderRadius: 'var(--radius-md, 8px)',
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
-                border: '1px solid var(--border-default, #cbd5e1)',
+                background: '#ffffff',
+                borderRadius: '0px',
+                boxShadow: 'none',
+                border: '1px solid #e4e4e7',
                 width: '100%',
                 maxWidth: '480px',
                 display: 'flex',
@@ -757,8 +757,8 @@ export default function HumanApprovalWorkflow({
                 alignItems: 'center'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <ShieldCheck size={18} color="var(--teal, #0ea5e9)" />
-                  <span id="approval-dialog-title" style={{ fontSize: '0.875rem', fontWeight: 800, letterSpacing: '0.02em' }}>
+                  <ShieldCheck size={18} color="#18181b" />
+                  <span id="approval-dialog-title" style={{ fontSize: '0.875rem', fontWeight: 800, letterSpacing: '0.05em' }}>
                     Confirm Credit Officer Decision
                   </span>
                 </div>
@@ -777,25 +777,25 @@ export default function HumanApprovalWorkflow({
                 
                 {/* Decision Context Box */}
                 <div style={{
-                  background: 'var(--bg-secondary, #f8fafc)',
-                  border: '1px solid var(--border-default, #cbd5e1)',
-                  borderRadius: '6px',
+                  background: '#f9fafb',
+                  border: '1px solid #e4e4e7',
+                  borderRadius: '0px',
                   padding: '0.75rem 1rem',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}>
                   <div>
-                    <div style={{ fontSize: '0.625rem', color: 'var(--text-tertiary, #64748b)', textTransform: 'uppercase', fontWeight: 700 }}>
+                    <div style={{ fontSize: '0.625rem', color: '#71717a', textTransform: 'uppercase', fontWeight: 700 }}>
                       Borrower Entity
                     </div>
-                    <div style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--text-primary, #0f172a)' }}>
+                    <div style={{ fontSize: '0.875rem', fontWeight: 800, color: '#09090b' }}>
                       {companyName}
                     </div>
                   </div>
 
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '0.625rem', color: 'var(--text-tertiary, #64748b)', textTransform: 'uppercase', fontWeight: 700 }}>
+                    <div style={{ fontSize: '0.625rem', color: '#71717a', textTransform: 'uppercase', fontWeight: 700 }}>
                       Selected Action
                     </div>
                     <div style={{ fontSize: '0.875rem', fontWeight: 900, color: getActionColor(pendingAction) }}>
@@ -813,21 +813,21 @@ export default function HumanApprovalWorkflow({
                 }}>
                   <div style={{
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '4px',
-                    background: 'var(--bg-tertiary, #f1f5f9)',
-                    border: '1px solid var(--border-default, #cbd5e1)'
+                    borderRadius: '0px',
+                    background: '#f4f4f5',
+                    border: '1px solid #e4e4e7'
                   }}>
-                    <div style={{ fontSize: '0.625rem', color: 'var(--text-tertiary, #64748b)', fontWeight: 700 }}>
+                    <div style={{ fontSize: '0.625rem', color: '#71717a', fontWeight: 700 }}>
                       AI RECOMMENDATION
                     </div>
-                    <div style={{ fontWeight: 800, marginTop: '2px', color: 'var(--text-secondary, #334155)' }}>
-                      {rawAiRec} <span style={{ fontSize: '0.625rem', fontWeight: 'normal', color: 'var(--text-tertiary, #64748b)' }}>(Advisory)</span>
+                    <div style={{ fontWeight: 800, marginTop: '2px', color: '#3f3f46' }}>
+                      {rawAiRec} <span style={{ fontSize: '0.625rem', fontWeight: 'normal', color: '#71717a' }}>(Advisory)</span>
                     </div>
                   </div>
 
                   <div style={{
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '4px',
+                    borderRadius: '0px',
                     background: `${getActionColor(pendingAction)}15`,
                     border: `1px solid ${getActionColor(pendingAction)}40`
                   }}>
@@ -844,18 +844,18 @@ export default function HumanApprovalWorkflow({
                 {isOverride && (
                   <div style={{
                     padding: '0.75rem',
-                    borderRadius: '6px',
+                    borderRadius: '0px',
                     background: 'rgba(239, 68, 68, 0.08)',
-                    borderLeft: '4px solid var(--rose, #ef4444)',
+                    borderLeft: '4px solid #71717a',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '4px'
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--rose, #ef4444)', fontWeight: 800, fontSize: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#71717a', fontWeight: 800, fontSize: '0.75rem' }}>
                       <AlertTriangle size={14} />
                       <span>AI Recommendation Override Detected</span>
                     </div>
-                    <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary, #334155)', lineHeight: 1.4 }}>
+                    <div style={{ fontSize: '0.6875rem', color: '#3f3f46', lineHeight: 1.4 }}>
                       Your decision ({pendingAction}) differs from the AI advisory recommendation ({rawAiRec}). An <strong>Override Reason</strong> is mandatory for regulatory compliance and audit logs.
                     </div>
                   </div>
@@ -870,11 +870,11 @@ export default function HumanApprovalWorkflow({
                         display: 'block',
                         fontSize: '0.75rem',
                         fontWeight: 700,
-                        color: 'var(--text-primary, #0f172a)',
+                        color: '#09090b',
                         marginBottom: '0.4rem'
                       }}
                     >
-                      Override Reason / Justification <span style={{ color: 'var(--rose, #ef4444)' }}>*</span>
+                      Override Reason / Justification <span style={{ color: '#71717a' }}>*</span>
                     </label>
                     <textarea
                       id="override-reason-input"
@@ -889,10 +889,10 @@ export default function HumanApprovalWorkflow({
                         width: '100%',
                         padding: '0.6rem 0.75rem',
                         fontSize: '0.75rem',
-                        color: 'var(--text-primary, #0f172a)',
-                        background: 'var(--bg-primary, #ffffff)',
-                        border: validationError ? '1px solid var(--rose, #ef4444)' : '1px solid var(--border-default, #cbd5e1)',
-                        borderRadius: 'var(--radius-sm, 4px)',
+                        color: '#09090b',
+                        background: '#ffffff',
+                        border: validationError ? '1px solid #71717a' : '1px solid #e4e4e7',
+                        borderRadius: '0px',
                         outline: 'none',
                         fontFamily: 'inherit',
                         resize: 'vertical'
@@ -910,11 +910,11 @@ export default function HumanApprovalWorkflow({
                         display: 'block',
                         fontSize: '0.75rem',
                         fontWeight: 700,
-                        color: 'var(--text-primary, #0f172a)',
+                        color: '#09090b',
                         marginBottom: '0.4rem'
                       }}
                     >
-                      Officer Audit Remarks <span style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary, #64748b)', fontWeight: 'normal' }}>(Optional)</span>
+                      Officer Audit Remarks <span style={{ fontSize: '0.6875rem', color: '#71717a', fontWeight: 'normal' }}>(Optional)</span>
                     </label>
                     <textarea
                       id="officer-notes-input"
@@ -926,10 +926,10 @@ export default function HumanApprovalWorkflow({
                         width: '100%',
                         padding: '0.6rem 0.75rem',
                         fontSize: '0.75rem',
-                        color: 'var(--text-primary, #0f172a)',
-                        background: 'var(--bg-primary, #ffffff)',
-                        border: '1px solid var(--border-default, #cbd5e1)',
-                        borderRadius: 'var(--radius-sm, 4px)',
+                        color: '#09090b',
+                        background: '#ffffff',
+                        border: '1px solid #e4e4e7',
+                        borderRadius: '0px',
                         outline: 'none',
                         fontFamily: 'inherit',
                         resize: 'vertical'
@@ -942,7 +942,7 @@ export default function HumanApprovalWorkflow({
                 {validationError && (
                   <div style={{
                     fontSize: '0.6875rem',
-                    color: 'var(--rose, #ef4444)',
+                    color: '#71717a',
                     fontWeight: 700,
                     display: 'flex',
                     alignItems: 'center',
@@ -958,8 +958,8 @@ export default function HumanApprovalWorkflow({
               {/* Modal Footer Actions */}
               <div style={{
                 padding: '0.875rem 1.25rem',
-                background: 'var(--bg-secondary, #f8fafc)',
-                borderTop: '1px solid var(--border-default, #cbd5e1)',
+                background: '#f9fafb',
+                borderTop: '1px solid #e4e4e7',
                 display: 'flex',
                 justifyContent: 'flex-end',
                 gap: '0.75rem'
@@ -970,10 +970,10 @@ export default function HumanApprovalWorkflow({
                   disabled={isUpdating}
                   style={{
                     padding: '0.5rem 1rem',
-                    background: 'var(--bg-primary, #ffffff)',
-                    color: 'var(--text-secondary, #334155)',
-                    border: '1px solid var(--border-default, #cbd5e1)',
-                    borderRadius: 'var(--radius-sm, 4px)',
+                    background: '#ffffff',
+                    color: '#3f3f46',
+                    border: '1px solid #e4e4e7',
+                    borderRadius: '0px',
                     fontSize: '0.75rem',
                     fontWeight: 600,
                     cursor: isUpdating ? 'not-allowed' : 'pointer'
@@ -991,14 +991,14 @@ export default function HumanApprovalWorkflow({
                     background: getActionColor(pendingAction),
                     color: '#ffffff',
                     border: 'none',
-                    borderRadius: 'var(--radius-sm, 4px)',
+                    borderRadius: '0px',
                     fontSize: '0.75rem',
                     fontWeight: 700,
                     cursor: isUpdating ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                    boxShadow: 'none'
                   }}
                 >
                   {isUpdating ? (
