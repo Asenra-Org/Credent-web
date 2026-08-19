@@ -11,13 +11,13 @@
  */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ShieldCheck, 
-  BarChart3, 
-  Clock, 
-  AlertTriangle, 
-  Search, 
-  Filter, 
+import {
+  ShieldCheck,
+  BarChart3,
+  Clock,
+  AlertTriangle,
+  Search,
+  Filter,
   ArrowUpRight,
   CheckCircle2,
   XCircle,
@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 
 import { downloadPDF } from '../utils/generatePdf';
+import HumanApprovalWorkflow, { getAiRecommendation } from './HumanApprovalWorkflow';
 
 const _envUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const API_BASE_URL = _envUrl.endsWith('/api/v1') ? _envUrl : `${_envUrl.replace(/\/$/, '')}/api/v1`;
@@ -78,7 +79,7 @@ export default function ManagerDashboard({ theme, onExit }) {
     downloadPDF(record.cam_report, reconstructedParams);
   };
 
-  const handleUpdateStatus = async (appId, newDecision) => {
+  const handleUpdateStatus = async (appId, newDecision, auditPayload = {}) => {
     if (!appId || updating) return;
 
     // Find and backup ONLY the single affected appraisal object for memory efficiency
@@ -92,14 +93,43 @@ export default function ManagerDashboard({ theme, onExit }) {
     const isDrawerTarget = selectedAppraisal && (selectedAppraisal.id === appId || selectedAppraisal.appraisal_id === appId);
     const previousDrawerItem = isDrawerTarget ? { ...selectedAppraisal } : null;
 
+    const originalAiRec = getAiRecommendation(targetItem);
+    const aiRec = auditPayload.aiRecommendation || originalAiRec;
+    const isOverride = auditPayload.isOverride || false;
+    const overrideReason = auditPayload.overrideReason || '';
+    const officerNotes = auditPayload.officerNotes || '';
+
+    // Construct rich audit rationale compatible with existing backend
+    let finalRationale = auditPayload.rationale;
+    if (!finalRationale) {
+      if (isOverride) {
+        finalRationale = `[OFFICER OVERRIDE] Decision: ${newDecision} (AI Recommendation: ${aiRec}). Justification: ${overrideReason}. Date: ${new Date().toISOString()}`;
+      } else if (officerNotes) {
+        finalRationale = `[OFFICER CONCURRENCE] Decision: ${newDecision}. Remarks: ${officerNotes}. Date: ${new Date().toISOString()}`;
+      } else {
+        finalRationale = `Formal institutional decision by Credit Officer: ${newDecision}. Date: ${new Date().toLocaleString()}`;
+      }
+    }
+
+    const updatedRecordFields = {
+      decision: newDecision,
+      status: newDecision,
+      officer_decision: newDecision,
+      ai_recommendation: originalAiRec,
+      decision_rationale: finalRationale,
+      is_override: isOverride,
+      override_reason: isOverride ? overrideReason : (targetItem.override_reason || null),
+      officer_notes: officerNotes || null
+    };
+
     // 1. Instant Optimistic Local State Mutation (0ms UI lag, single item update)
     setAppraisals(prev => prev.map(item => {
       const id = item.id || item.appraisal_id;
-      return id === appId ? { ...item, decision: newDecision, status: newDecision } : item;
+      return id === appId ? { ...item, ...updatedRecordFields } : item;
     }));
 
     if (isDrawerTarget) {
-      setSelectedAppraisal(prev => prev ? { ...prev, decision: newDecision, status: newDecision } : null);
+      setSelectedAppraisal(prev => prev ? { ...prev, ...updatedRecordFields } : null);
     }
 
     setUpdating(true);
@@ -108,9 +138,14 @@ export default function ManagerDashboard({ theme, onExit }) {
       const resp = await fetch(`${API_BASE_URL}/reports/update-status/${appId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           decision: newDecision,
-          rationale: `Formal institutional decision by bank manager. Date: ${new Date().toLocaleString()}`
+          rationale: finalRationale,
+          override_reason: isOverride ? overrideReason : undefined,
+          is_override: isOverride,
+          officer_decision: newDecision,
+          ai_recommendation: aiRec,
+          timestamp: new Date().toISOString()
         })
       });
 
@@ -123,9 +158,6 @@ export default function ManagerDashboard({ theme, onExit }) {
       if (result.status !== 'success') {
         throw new Error(result.message || 'Server rejected status update');
       }
-
-      // Success: Close drawer cleanly after decision override (matching original UX intent)
-      setSelectedAppraisal(null);
     } catch (err) {
       console.error("Cloud Decision Sync failed:", err);
       // 2. Rollback ONLY the single affected item and drawer state on error
@@ -144,7 +176,7 @@ export default function ManagerDashboard({ theme, onExit }) {
     }
   };
 
-  const averageRisk = appraisals.length > 0 
+  const averageRisk = appraisals.length > 0
     ? (appraisals.reduce((acc, curr) => acc + (Number(curr.adjusted_score) || 0), 0) / appraisals.length).toFixed(1)
     : '0.0';
 
@@ -192,7 +224,7 @@ export default function ManagerDashboard({ theme, onExit }) {
       `}</style>
       <header className="hud-header" style={{ marginBottom: '2.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <motion.button 
+          <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onExit}
@@ -237,8 +269,8 @@ export default function ManagerDashboard({ theme, onExit }) {
             <div style={{ marginTop: '1rem' }}>
               <div className="search-bar" style={{ marginBottom: '1rem' }}>
                 <Search size={16} color="var(--text-tertiary)" />
-                <input 
-                  placeholder="Search entities..." 
+                <input
+                  placeholder="Search entities..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{ background: 'none', border: 'none', color: 'var(--text-primary)', width: '100%', fontSize: '0.875rem' }}
@@ -246,13 +278,13 @@ export default function ManagerDashboard({ theme, onExit }) {
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                 {['ALL', 'APPROVE', 'REJECT', 'MANUAL REVIEW'].map(status => (
-                  <button 
+                  <button
                     key={status}
                     onClick={() => setFilterStatus(status)}
-                    style={{ 
-                      padding: '0.4rem 0.75rem', 
-                      borderRadius: 'var(--radius-md)', 
-                      fontSize: '0.75rem', 
+                    style={{
+                      padding: '0.4rem 0.75rem',
+                      borderRadius: 'var(--radius-md)',
+                      fontSize: '0.75rem',
                       fontWeight: '700',
                       border: '1px solid var(--border-default)',
                       background: filterStatus === status ? 'var(--navy-soft)' : 'var(--bg-primary)',
@@ -297,7 +329,7 @@ export default function ManagerDashboard({ theme, onExit }) {
                 ) : (
                   <AnimatePresence>
                     {filteredData.map((app, index) => (
-                      <motion.tr 
+                      <motion.tr
                         key={app.id || index}
                         onClick={() => setSelectedAppraisal(app)}
                         whileHover={{ scale: 1.01, background: 'var(--bg-tertiary)' }}
@@ -323,10 +355,10 @@ export default function ManagerDashboard({ theme, onExit }) {
                         </div>
                       </td>
                       <td style={{ padding: '1rem 1.5rem' }}>
-                        <span style={{ 
-                          padding: '0.25rem 0.5rem', 
-                          borderRadius: '4px', 
-                          background: `${getStatusColor(app.decision)}20`, 
+                        <span style={{
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '4px',
+                          background: `${getStatusColor(app.decision)}20`,
                           color: getStatusColor(app.decision),
                           fontSize: '0.6875rem',
                           fontWeight: '800'
@@ -338,7 +370,7 @@ export default function ManagerDashboard({ theme, onExit }) {
                       </td>
                       <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                          <button 
+                          <button
                             className="btn-action-small"
                             title="Download PDF"
                             onClick={(e) => { e.stopPropagation(); handleDownloadHistoricalPDF(app); }}
@@ -360,52 +392,57 @@ export default function ManagerDashboard({ theme, onExit }) {
         </div>
       </div>
 
-      {/* DECISION DETAIL PANEL (Maker-Checker) */}
+      {/* DECISION DETAIL PANEL (Maker-Checker / Human Approval Workflow) */}
       <AnimatePresence>
         {selectedAppraisal && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 100 }}
-            style={{ 
-              position: 'fixed', top: 0, right: 0, width: '400px', height: '100vh', 
+            style={{
+              position: 'fixed', top: 0, right: 0, width: '480px', maxWidth: '100vw', height: '100vh',
               background: 'var(--bg-primary)', borderLeft: '1px solid var(--border-default)',
-              boxShadow: '-10px 0 30px rgba(0,0,0,0.5)', zIndex: 1000, padding: '2rem',
+              boxShadow: '-10px 0 30px rgba(0,0,0,0.5)', zIndex: 1000, padding: '1.75rem',
               display: 'flex', flexDirection: 'column'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <div style={{ fontSize: '1.25rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <ShieldCheck color="var(--teal)" /> Decision Center
               </div>
-              <button onClick={() => setSelectedAppraisal(null)} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer' }}>
-                <X size={24} />
+              <button
+                onClick={() => setSelectedAppraisal(null)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', padding: '4px' }}
+                aria-label="Close Decision Center"
+              >
+                <X size={22} />
               </button>
             </div>
 
-            <div className="panel" style={{ padding: '1.5rem', marginBottom: '1.5rem', border: selectedAppraisal.integrity_flags?.forensics?.is_suspicious ? '1px solid var(--rose)' : 'none' }}>
+            {/* Entity Quick Header Banner */}
+            <div className="panel" style={{ padding: '1.25rem', marginBottom: '1rem', border: selectedAppraisal.integrity_flags?.forensics?.is_suspicious ? '1px solid var(--rose)' : 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Selected Entity</div>
+                <div style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 700 }}>Selected Entity</div>
                 {selectedAppraisal.integrity_flags?.forensics && (
                     <div style={{ fontSize: '0.625rem', padding: '2px 6px', borderRadius: '4px', background: selectedAppraisal.integrity_flags.forensics.is_suspicious ? 'var(--rose)' : 'var(--emerald)', color: 'white', fontWeight: '800' }}>
                         {selectedAppraisal.integrity_flags.forensics.is_suspicious ? 'SUSPICIOUS' : 'SECURE'}
                     </div>
                 )}
               </div>
-              <div style={{ fontSize: '1.5rem', fontWeight: '800', marginTop: '0.5rem' }}>{selectedAppraisal.company_name}</div>
-              <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
+              <div style={{ fontSize: '1.35rem', fontWeight: '800', marginTop: '0.25rem' }}>{selectedAppraisal.company_name}</div>
+              <div style={{ marginTop: '0.5rem', display: 'flex', gap: '1.5rem' }}>
                 <div>
-                  <div style={{ fontSize: '0.625rem', color: 'var(--text-tertiary)' }}>SECTOR</div>
-                  <div style={{ fontSize: '0.8125rem', fontWeight: '700' }}>{selectedAppraisal.sector}</div>
+                  <div style={{ fontSize: '0.625rem', color: 'var(--text-tertiary)', fontWeight: 700 }}>SECTOR</div>
+                  <div style={{ fontSize: '0.8125rem', fontWeight: '700' }}>{selectedAppraisal.sector || 'Commercial'}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.625rem', color: 'var(--text-tertiary)' }}>AI RISK SCORE</div>
-                  <div style={{ fontSize: '0.8125rem', fontWeight: '700', color: getStatusColor(selectedAppraisal.decision) }}>{selectedAppraisal.adjusted_score}%</div>
+                  <div style={{ fontSize: '0.625rem', color: 'var(--text-tertiary)', fontWeight: 700 }}>APPLICATION ID</div>
+                  <div style={{ fontSize: '0.8125rem', fontWeight: '700', fontFamily: 'var(--font-mono, monospace)' }}>{selectedAppraisal.id || selectedAppraisal.appraisal_id || 'N/A'}</div>
                 </div>
               </div>
 
               {selectedAppraisal.integrity_flags?.forensics?.is_suspicious && (
-                <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(244, 63, 94, 0.1)', borderRadius: 'var(--radius-md)', borderLeft: '3px solid var(--rose)' }}>
+                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(244, 63, 94, 0.1)', borderRadius: 'var(--radius-md)', borderLeft: '3px solid var(--rose)' }}>
                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--rose)', fontSize: '0.6875rem', fontWeight: '800' }}>
                       <AlertTriangle size={12} /> FORENSIC TAMPER ALERT
                    </div>
@@ -416,40 +453,18 @@ export default function ManagerDashboard({ theme, onExit }) {
               )}
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto' }}>
-               <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '0.5rem' }}>AI ANALYSIS RATIONALE</div>
-               <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: '1.6', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
-                  {selectedAppraisal.decision_rationale}
-               </div>
-
-               <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '1rem' }}>MANAGEMENT ACTION</div>
-               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <button 
-                    disabled={updating}
-                    onClick={() => handleUpdateStatus(selectedAppraisal.id || selectedAppraisal.appraisal_id, 'APPROVE')}
-                    style={{ padding: '1rem', background: 'var(--emerald)', border: 'none', borderRadius: 'var(--radius-md)', color: 'white', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                  >
-                    {updating ? 'Processing...' : <><ShieldCheck size={18} /> Formal Approval</>}
-                  </button>
-                  <button 
-                    disabled={updating}
-                    onClick={() => handleUpdateStatus(selectedAppraisal.id || selectedAppraisal.appraisal_id, 'REJECT')}
-                    style={{ padding: '1rem', background: 'var(--rose)', border: 'none', borderRadius: 'var(--radius-md)', color: 'white', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                  >
-                    {updating ? 'Processing...' : <><AlertTriangle size={18} /> Formal Rejection</>}
-                  </button>
-                  <button 
-                    disabled={updating}
-                    onClick={() => handleUpdateStatus(selectedAppraisal.id || selectedAppraisal.appraisal_id, 'PENDING')}
-                    style={{ padding: '1rem', background: 'transparent', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', fontWeight: '700', cursor: 'pointer' }}
-                  >
-                    {updating ? 'Processing...' : 'Hold for Manual Review'}
-                  </button>
-               </div>
+            {/* Scrollable Human Approval Workflow */}
+            <div style={{ flex: 1, overflowY: 'auto', paddingRight: '2px' }}>
+              <HumanApprovalWorkflow
+                appraisal={selectedAppraisal}
+                onUpdateDecision={handleUpdateStatus}
+                isUpdating={updating}
+                onClose={() => setSelectedAppraisal(null)}
+              />
             </div>
 
-            <div style={{ marginTop: '2rem', padding: '1rem', borderTop: '1px solid var(--border-default)', fontSize: '0.625rem', color: 'var(--text-tertiary)', textAlign: 'center' }}>
-               <Zap size={10} /> Cloud-Secure Synchronization Active
+            <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-default)', fontSize: '0.625rem', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+               <Zap size={10} /> Cloud-Secure Synchronization Active • Maker-Checker Audit Log
             </div>
           </motion.div>
         )}
