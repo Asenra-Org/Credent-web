@@ -196,12 +196,12 @@ export default function ManagerDashboard({ theme }) {
 
   // SKELETON COMPONENTS
   const SkeletonStat = () => (
-    <div style={{ height: '80px', background: 'var(--bg-secondary)', borderRadius: '0px', animation: 'pulse 1.5s infinite linear', marginBottom: '1rem' }}></div>
+    <div style={{ height: '80px', background: 'var(--bg-secondary)', borderRadius: 0, animation: 'pulse 1.5s infinite linear', marginBottom: '1rem' }}></div>
   );
 
   const SkeletonRow = () => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1rem', padding: '1rem', borderBottom: '1px solid #e4e4e7', animation: 'pulse 1.5s infinite linear' }}>
-      {[...Array(7)].map((_, i) => <div key={i} style={{ height: '14px', background: 'var(--bg-secondary)', borderRadius: '0px' }}></div>)}
+      {[...Array(7)].map((_, i) => <div key={i} style={{ height: '14px', background: 'var(--bg-secondary)', borderRadius: 0 }}></div>)}
     </div>
   );
 
@@ -220,7 +220,7 @@ export default function ManagerDashboard({ theme }) {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate('/engine')}
-            style={{ background: 'var(--bg-primary)', border: '1px solid #e4e4e7', color: '#09090b', padding: '0.5rem 1rem', borderRadius: '0px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            style={{ background: 'var(--bg-primary)', border: '1px solid #e4e4e7', color: '#09090b', padding: '0.5rem 1rem', borderRadius: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
             <ArrowLeft size={16} /> Exit Terminal
           </motion.button>
@@ -228,7 +228,7 @@ export default function ManagerDashboard({ theme }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
            <div style={{ color: '#71717a', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: loading ? '#71717a' : '#18181b', boxShadow: loading ? '0 0 5px #71717a' : '0 0 5px #18181b' }}></div>
+              <div style={{ width: '6px', height: '6px', borderRadius: 0, background: loading ? '#71717a' : '#18181b', boxShadow: loading ? '0 0 5px #71717a' : '0 0 5px #18181b' }}></div>
               {loading ? 'Cloud Syncing...' : 'Live Cloud Pulse'}
            </div>
         </div>
@@ -275,7 +275,7 @@ export default function ManagerDashboard({ theme }) {
                     onClick={() => setFilterStatus(status)}
                     style={{
                       padding: '0.4rem 0.75rem',
-                      borderRadius: '0px',
+                      borderRadius: 0,
                       fontSize: '0.75rem',
                       fontWeight: '700',
                       border: '1px solid #e4e4e7',
@@ -297,7 +297,7 @@ export default function ManagerDashboard({ theme }) {
           <div style={{ padding: '1.5rem', borderBottom: '1px solid #e4e4e7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div className="panel-title" style={{ margin: 0 }}><History size={16} /> Application Ledger (Cloud Sync)</div>
             <div style={{ fontSize: '0.75rem', color: '#18181b', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#18181b' }} /> Supabase Real-time Active
+              <div style={{ width: '6px', height: '6px', borderRadius: 0, background: '#18181b' }} /> Supabase Real-time Active
             </div>
           </div>
 
@@ -340,7 +340,7 @@ export default function ManagerDashboard({ theme }) {
                       </td>
                       <td style={{ padding: '1rem 1.5rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '40px', height: '4px', background: '#e4e4e7', borderRadius: '0px', overflowY: 'auto' }}>
+                          <div style={{ width: '40px', height: '4px', background: '#e4e4e7', borderRadius: 0, overflowY: 'auto' }}>
                             <div style={{ height: '100%', width: `${app.adjusted_score}%`, background: getStatusColor(app.decision) }} />
                           </div>
                           <span style={{ fontWeight: '800' }}>{app.adjusted_score}</span>
@@ -349,7 +349,7 @@ export default function ManagerDashboard({ theme }) {
                       <td style={{ padding: '1rem 1.5rem' }}>
                         <span style={{
                           padding: '0.25rem 0.5rem',
-                          borderRadius: '0px',
+                          borderRadius: 0,
                           background: `${getStatusColor(app.decision)}20`,
                           color: getStatusColor(app.decision),
                           fontSize: '0.6875rem',
@@ -416,7 +416,7 @@ export default function ManagerDashboard({ theme }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ fontSize: '0.6875rem', color: '#71717a', textTransform: 'uppercase', fontWeight: 700 }}>Selected Entity</div>
                 {selectedAppraisal.integrity_flags?.forensics && (
-                    <div style={{ fontSize: '0.625rem', padding: '2px 6px', borderRadius: '0px', background: selectedAppraisal.integrity_flags.forensics.is_suspicious ? '#71717a' : '#18181b', color: 'white', fontWeight: '800' }}>
+                    <div style={{ fontSize: '0.625rem', padding: '2px 6px', borderRadius: 0, background: selectedAppraisal.integrity_flags.forensics.is_suspicious ? '#71717a' : '#18181b', color: 'white', fontWeight: '800' }}>
                         {selectedAppraisal.integrity_flags.forensics.is_suspicious ? 'SUSPICIOUS' : 'SECURE'}
                     </div>
                 )}
@@ -434,7 +434,7 @@ export default function ManagerDashboard({ theme }) {
               </div>
 
               {selectedAppraisal.integrity_flags?.forensics?.is_suspicious && (
-                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#f4f4f5', borderRadius: '0px', borderLeft: '3px solid #71717a' }}>
+                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#f4f4f5', borderRadius: 0, borderLeft: '3px solid #71717a' }}>
                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#71717a', fontSize: '0.6875rem', fontWeight: '800' }}>
                       <AlertTriangle size={12} /> FORENSIC TAMPER ALERT
                    </div>
@@ -468,7 +468,7 @@ export default function ManagerDashboard({ theme }) {
 function StatItem({ label, value, icon, color }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-      <div style={{ width: '40px', height: '40px', borderRadius: '0px', background: `${color}15`, color, display: 'flex', alignItems: 'center', justifyCenter: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '40px', height: '40px', borderRadius: 0, background: `${color}15`, color, display: 'flex', alignItems: 'center', justifyCenter: 'center', justifyContent: 'center' }}>
         {icon}
       </div>
       <div>

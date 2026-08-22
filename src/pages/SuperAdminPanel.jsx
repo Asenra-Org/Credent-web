@@ -1,58 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import api from '../lib/api';
-import { Loader2, Plus, Shield } from 'lucide-react';
+import { Loader2, Plus, Building2 } from 'lucide-react';
 
-export default function AdminPanel() {
+export default function SuperAdminPanel() {
   const { user } = useAuthStore();
-  const [users, setUsers] = useState([]);
+  const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('CREDIT_ANALYST');
-  const [inviting, setInviting] = useState(false);
+  const [orgName, setOrgName] = useState('');
+  const [adminEmail, setAdminEmail] = useState('');
+  const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   
-  const roles = ['CREDIT_ANALYST', 'UNDERWRITING_MANAGER', 'VIEWER', 'ORG_ADMIN'];
-
-  const fetchUsers = async () => {
+  const fetchOrganizations = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/admin/organizations/' + (user?.organization?.id || 'current') + '/users');
-      setUsers(res.data);
+      const res = await api.get('/admin/organizations');
+      setOrganizations(res.data);
     } catch (err) {
-      setError('Failed to load users');
+      setError('Failed to load organizations');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (user?.organization?.id) {
-        fetchUsers();
-    }
-  }, [user]);
+    fetchOrganizations();
+  }, []);
 
-  const handleInvite = async (e) => {
+  const handleCreateOrg = async (e) => {
     e.preventDefault();
     try {
-      setInviting(true);
+      setCreating(true);
       setError('');
-      await api.post('/admin/organizations/' + (user?.organization?.id) + '/users', { email: inviteEmail, role: inviteRole });
-      setInviteEmail('');
-      await fetchUsers();
+      setSuccess('');
+      
+      // 1. Create the organization
+      const orgRes = await api.post('/admin/organizations', { name: orgName });
+      const newOrgId = orgRes.data.id;
+      
+      // 2. Invite the first ORG_ADMIN
+      await api.post(`/admin/organizations/${newOrgId}/users`, { 
+        email: adminEmail, 
+        role: 'ORG_ADMIN' 
+      });
+      
+      setOrgName('');
+      setAdminEmail('');
+      setSuccess(`Organization "${orgRes.data.name}" onboarded successfully with admin ${adminEmail}`);
+      await fetchOrganizations();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to invite user');
+      setError(err.response?.data?.detail || 'Failed to onboard organization');
     } finally {
-      setInviting(false);
-    }
-  };
-
-  const toggleUserStatus = async (userId, currentStatus) => {
-    try {
-      await api.patch(`/admin/users/${userId}/status`, { is_active: !currentStatus });
-      await fetchUsers();
-    } catch (err) {
-      setError('Failed to update user status');
+      setCreating(false);
     }
   };
 
@@ -99,6 +100,13 @@ export default function AdminPanel() {
       color: '#991b1b',
       fontSize: '13px',
     },
+    successBox: {
+      padding: '1rem',
+      border: '1px solid #bbf7d0',
+      backgroundColor: '#f0fdf4',
+      color: '#166534',
+      fontSize: '13px',
+    },
     grid: {
       display: 'grid',
       gridTemplateColumns: '1fr 2fr',
@@ -143,15 +151,6 @@ export default function AdminPanel() {
       outline: 'none',
       boxSizing: 'border-box',
     },
-    select: {
-      width: '100%',
-      padding: '0.625rem',
-      border: '1px solid var(--border-color)',
-      fontSize: '13px',
-      outline: 'none',
-      backgroundColor: '#fff',
-      boxSizing: 'border-box',
-    },
     button: {
       width: '100%',
       padding: '0.625rem',
@@ -187,25 +186,6 @@ export default function AdminPanel() {
       padding: '1rem',
       borderBottom: '1px solid var(--border-subtle)',
     },
-    statusBadge: (isActive) => ({
-      display: 'inline-block',
-      padding: '0.25rem 0.5rem',
-      fontFamily: 'var(--font-mono)',
-      fontSize: '10px',
-      textTransform: 'uppercase',
-      letterSpacing: '0.1em',
-      border: isActive ? '1px solid #bbf7d0' : '1px solid var(--border-color)',
-      backgroundColor: isActive ? '#f0fdf4' : 'var(--bg-tertiary)',
-      color: isActive ? '#15803d' : 'var(--text-muted)',
-    }),
-    actionBtn: {
-      background: 'none',
-      border: 'none',
-      fontSize: '12px',
-      color: 'var(--text-muted)',
-      textDecoration: 'underline',
-      cursor: 'pointer',
-    }
   };
 
   return (
@@ -214,13 +194,13 @@ export default function AdminPanel() {
         
         <header style={styles.headerCard}>
           <div>
-            <h1 style={styles.title}>{user?.organization?.name || 'Organization'} Admin</h1>
-            <p style={styles.subtitle}>Manage Users and Permissions</p>
+            <h1 style={styles.title}>Platform Console</h1>
+            <p style={styles.subtitle}>Super Admin &middot; CRESEM Platform</p>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontWeight: 500 }}>{user?.email}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', justifyContent: 'flex-end', ...styles.subtitle }}>
-              <Shield size={12} /> {user?.role?.replace('_', ' ')}
+              SUPER ADMIN
             </div>
           </div>
         </header>
@@ -230,43 +210,49 @@ export default function AdminPanel() {
             {error}
           </div>
         )}
+        
+        {success && (
+          <div style={styles.successBox}>
+            {success}
+          </div>
+        )}
 
         <div style={styles.grid}>
           
           <div style={styles.card}>
             <div style={styles.cardHeader}>
-              <h2 style={styles.cardTitle}>Invite User</h2>
+              <h2 style={styles.cardTitle}>Onboard Institution</h2>
             </div>
             <div style={styles.cardBody}>
-              <form onSubmit={handleInvite}>
+              <form onSubmit={handleCreateOrg}>
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Email Address</label>
+                  <label style={styles.label}>Institution Name</label>
                   <input
-                    type="email"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
+                    type="text"
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
                     required
                     style={styles.input}
+                    placeholder="e.g. HDFC Bank"
                   />
                 </div>
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Role</label>
-                  <select
-                    value={inviteRole}
-                    onChange={(e) => setInviteRole(e.target.value)}
-                    style={styles.select}
-                  >
-                    {roles.map(r => (
-                      <option key={r} value={r}>{r.replace('_', ' ')}</option>
-                    ))}
-                  </select>
+                  <label style={styles.label}>Root Admin Email</label>
+                  <input
+                    type="email"
+                    value={adminEmail}
+                    onChange={(e) => setAdminEmail(e.target.value)}
+                    required
+                    style={styles.input}
+                    placeholder="admin@institution.com"
+                  />
                 </div>
                 <button
                   type="submit"
-                  disabled={inviting}
-                  style={{ ...styles.button, opacity: inviting ? 0.5 : 1 }}
+                  disabled={creating}
+                  style={{ ...styles.button, opacity: creating ? 0.5 : 1, marginTop: '1.5rem' }}
                 >
-                  {inviting ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <><Plus size={16} /> Send Invite</>}
+                  {creating ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <><Plus size={16} /> Create & Invite</>}
                 </button>
               </form>
             </div>
@@ -274,8 +260,8 @@ export default function AdminPanel() {
 
           <div style={styles.card}>
             <div style={styles.cardHeader}>
-              <h2 style={styles.cardTitle}>Users</h2>
-              <div style={styles.subtitle}>{users.length} Total</div>
+              <h2 style={styles.cardTitle}>Institutions</h2>
+              <div style={styles.subtitle}>{organizations.length} Total</div>
             </div>
             
             {loading ? (
@@ -287,36 +273,27 @@ export default function AdminPanel() {
                 <table style={styles.table}>
                   <thead>
                     <tr>
-                      <th style={styles.th}>Email</th>
-                      <th style={styles.th}>Role</th>
-                      <th style={styles.th}>Status</th>
-                      <th style={styles.th}>Actions</th>
+                      <th style={styles.th}>ID</th>
+                      <th style={styles.th}>Name</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map(u => (
-                      <tr key={u.user_id || u.id}>
-                        <td style={styles.td}>{u.email}</td>
-                        <td style={{ ...styles.td, color: 'var(--text-muted)' }}>{u.role.replace('_', ' ')}</td>
-                        <td style={styles.td}>
-                          <span style={styles.statusBadge(u.is_active)}>
-                            {u.is_active ? 'Active' : 'Disabled'}
-                          </span>
+                    {organizations.map(org => (
+                      <tr key={org.id}>
+                        <td style={{ ...styles.td, fontFamily: 'monospace', fontSize: '11px', color: 'var(--text-muted)' }}>
+                          {org.id.split('-')[0]}...
                         </td>
-                        <td style={styles.td}>
-                          <button
-                            onClick={() => toggleUserStatus(u.user_id || u.id, u.is_active)}
-                            disabled={(u.user_id || u.id) === user?.id}
-                            style={{ ...styles.actionBtn, opacity: (u.user_id || u.id) === user?.id ? 0.3 : 1 }}
-                          >
-                            {u.is_active ? 'Disable' : 'Enable'}
-                          </button>
+                        <td style={{ ...styles.td, fontWeight: 500 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Building2 size={14} color="var(--text-muted)" />
+                            {org.name}
+                          </div>
                         </td>
                       </tr>
                     ))}
-                    {users.length === 0 && (
+                    {organizations.length === 0 && (
                       <tr>
-                        <td colSpan="4" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No users found.</td>
+                        <td colSpan="2" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No organizations found.</td>
                       </tr>
                     )}
                   </tbody>

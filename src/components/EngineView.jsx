@@ -36,22 +36,22 @@ const d = String(decision ?? "")
   .toUpperCase();
 
 if (d === "APPROVED" || d === "APPROVE") {
-  return { label: d, bg: "#ecfdf5", border: "#10b981", color: "#10b981", Icon: CheckCircle2 };
+  return { label: d, bg: "#f4f4f5", border: "#18181b", color: "#18181b", Icon: CheckCircle2 };
 }
 
 if (d === "REJECTED" || d === "REJECT") {
-  return { label: d, bg: "#fff1f2", border: "#ef4444", color: "#ef4444", Icon: XCircle };
+  return { label: d, bg: "#f4f4f5", border: "#ef4444", color: "#ef4444", Icon: XCircle };
 }
 
 if (d === "MANUAL REVIEW" || d === "MANUAL_REVIEW") {
-  return { label: d, bg: "#fffbeb", border: "#d97706", color: "#d97706", Icon: AlertTriangle };
+  return { label: d, bg: "#fffbeb", border: "#18181b", color: "#18181b", Icon: AlertTriangle };
 }
 
 return {
   label: d || "UNKNOWN",
-  bg: "#f4f6f8",
-  border: "#8a99a8",
-  color: "#8a99a8",
+  bg: "#fafafa",
+  border: "#71717a",
+  color: "#71717a",
   Icon: HelpCircle,
 };}
 
@@ -358,9 +358,12 @@ export default function EngineView() {
       fd.append('case_id', caseId);  // passes our tracking ID to the backend
       const res1 = await api.post('documents/ingest/pdf', fd);
 
-      if (res1.data.status === 'error' || !res1.data.ai_analysis) {
-        throw new Error(res1.data.detail || res1.data.message || 'PDF extraction failed');
-      }
+      if (res1.data.status === 'paused') {
+          throw new Error('Pipeline paused for Manager Approval (HITL). ' + (res1.data.message || ''));
+        }
+        if (res1.data.status === 'error' || !res1.data.ai_analysis || Object.keys(res1.data.ai_analysis).length === 0) {
+          throw new Error(res1.data.detail || res1.data.message || 'PDF extraction failed');
+        }
 
       const pdfData = res1.data.ai_analysis;
       const forensicsData = res1.data.forensics;
@@ -454,13 +457,7 @@ export default function EngineView() {
           worth: pdfData.shareholder_equity
         },
         forensicsReport: forensicsData,
-        camReport: {
-          decision: camData.decision || 'MANUAL REVIEW',
-          five_cs: camData.five_cs || {},
-          recommended_loan_amount: camData.recommended_loan_amount || 'TBD',
-          recommended_interest_rate: camData.recommended_interest_rate || 'TBD',
-          decision_rationale: camData.decision_rationale || 'Analysis complete.'
-        },
+        camReport: camData,
         finalScore: cappedScore,
         osintData: researchData
       };
@@ -587,9 +584,12 @@ export default function EngineView() {
       fd.append('file', targetFile);
       const res1 = await api.post('documents/ingest/pdf', fd);
 
-      if (res1.data.status === 'error' || !res1.data.ai_analysis) {
-        throw new Error(res1.data.detail || res1.data.message || 'PDF extraction failed');
-      }
+      if (res1.data.status === 'paused') {
+          throw new Error('Pipeline paused for Manager Approval (HITL). ' + (res1.data.message || ''));
+        }
+        if (res1.data.status === 'error' || !res1.data.ai_analysis || Object.keys(res1.data.ai_analysis).length === 0) {
+          throw new Error(res1.data.detail || res1.data.message || 'PDF extraction failed');
+        }
 
       const pdfData = res1.data.ai_analysis;
       const forensicsData = res1.data.forensics;
@@ -670,13 +670,7 @@ export default function EngineView() {
       
       const camData = res5.data?.cam_report;
       
-      setCamReport({
-        decision: camData.decision || 'MANUAL REVIEW',
-        five_cs: camData.five_cs || {},
-        recommended_loan_amount: camData.recommended_loan_amount || 'TBD',
-        recommended_interest_rate: camData.recommended_interest_rate || 'TBD',
-        decision_rationale: camData.decision_rationale || 'Analysis complete.'
-      });
+      setCamReport(camData);
       setFinalScore(cappedScore);
       setOsintData(researchData);
       setProgress(100);
@@ -716,15 +710,15 @@ export default function EngineView() {
       background: '#eaedf1', 
       display: 'flex', 
       flexDirection: 'column', 
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      color: '#2c3540',
+      fontFamily: 'var(--font-family)',
+      color: '#27272a',
       fontSize: '13px'
     }}>
       
-      {/* 1. TOPBAR (Background: #2c3540) */}
+      {/* 1. TOPBAR (Background: #27272a) */}
       <header style={{ 
-        background: '#2c3540', 
-        color: '#ffffff', 
+        background: '#ffffff', 
+        color: '#18181b', 
         height: '52px', 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -734,43 +728,43 @@ export default function EngineView() {
       }}>
         {/* Left Brand Header (Background: #222a33, width matches sidebar) */}
         <div style={{ 
-          background: '#222a33', 
+          background: '#ffffff', 
           width: '230px', 
           height: '100%', 
           display: 'flex', 
           alignItems: 'center', 
           padding: '0 1.25rem',
           gap: '0.5rem',
-          fontWeight: 700,
+          fontWeight: 600,
           fontSize: '14px',
           letterSpacing: '0.02em',
           borderRight: '1px solid var(--border-light)'
         }}>
-          <img src="/logo.jpg" alt="Credent Logo" style={{ height: '24px', width: '24px', borderRadius: '4px', objectFit: 'cover' }} />
+          <img src="/logo.jpg" alt="Credent Logo" style={{ height: '24px', width: '24px', borderRadius: 0, objectFit: 'cover' }} />
           <span style={{ fontSize: '15px' }}>Credent</span>
         </div>
         
         {/* Middle Header Section */}
         <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '1rem', flex: 1 }}>
-          <Menu size={20} style={{ cursor: 'pointer', color: '#8a99a8' }} />
-          <span style={{ marginLeft: '1rem', fontSize: '11px', color: '#8a99a8', fontFamily: 'monospace' }}>
+          <Menu size={20} style={{ cursor: 'pointer', color: '#71717a' }} />
+          <span style={{ marginLeft: '1rem', fontSize: '11px', color: '#71717a', fontFamily: 'var(--font-mono)' }}>
             
           </span>
         </div>
 
         {/* Right Header Section */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', paddingRight: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '11px', color: '#8a99a8', fontFamily: 'monospace' }}>
-            <Clock size={12} color="#0d213f" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '11px', color: '#71717a', fontFamily: 'var(--font-mono)' }}>
+            <Clock size={12} color="#18181b" />
             <span>{sessionTime || '0000-00-00 00:00:00 UTC'}</span>
           </div>
-          <Bell size={16} style={{ color: '#8a99a8', cursor: 'pointer' }} />
+          <Bell size={16} style={{ color: '#71717a', cursor: 'pointer' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <div style={{ 
               width: '24px', 
               height: '24px', 
-              borderRadius: '50%', 
-              background: '#0d213f', 
+              borderRadius: 0, 
+              background: '#18181b', 
               color: '#ffffff', 
               display: 'flex', 
               alignItems: 'center', 
@@ -792,8 +786,8 @@ export default function EngineView() {
         {/* LEFT SIDEBAR (Background: #ffffff) */}
         <aside style={{ 
           width: '230px', 
-          background: '#ffffff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
-          borderRight: '1px solid #e2e8f0', 
+          background: '#ffffff', borderRadius: 0, boxShadow: 'none', 
+          borderRight: '1px solid #e4e4e7', 
           display: 'flex', 
           flexDirection: 'column',
           flexShrink: 0
@@ -808,10 +802,10 @@ export default function EngineView() {
                 alignItems: 'center', 
                 justifyContent: 'space-between',
                 padding: '0.6rem 1.25rem', 
-                background: '#f4f6f8', 
-                color: '#0d213f', 
+                background: '#fafafa', 
+                color: '#18181b', 
                 fontWeight: 600,
-                borderLeft: '3px solid #0d213f',
+                borderLeft: '3px solid #18181b',
                 cursor: 'pointer'
               }}
             >
@@ -832,7 +826,7 @@ export default function EngineView() {
                 justifyContent: 'space-between',
                 padding: '0.6rem 1.25rem', 
                 background: 'transparent', 
-                color: '#506070', 
+                color: '#71717a', 
                 fontWeight: 400,
                 borderLeft: '3px solid transparent',
                 cursor: 'pointer'
@@ -867,40 +861,40 @@ export default function EngineView() {
               }}>
                 {/* Card 1: Risk Appraisal Score */}
                 <div style={{ 
-                  background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
+                  background: '#ffffff', boxShadow: 'none', 
                   border: '1px solid #cbd5e1', 
                   padding: '1.25rem', 
                   textAlign: 'center', 
-                  borderRadius: '2px'
+                  borderRadius: 0
                 }}>
-                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#0d213f', fontFamily: 'monospace' }}>
+                  <div style={{ fontSize: '24px', fontWeight: 600, color: '#18181b', fontFamily: 'var(--font-mono)' }}>
                     {appStatus === 'processing' ? (
                       <div className="skeleton skeleton-heading"></div>
                     ) : (
                       detectedParams ? finalScore : '00'
                     )}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#8a99a8', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                  <div style={{ fontSize: '11px', color: '#71717a', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                     Risk appraisal score
                   </div>
                 </div>
 
                 {/* Card 2: Extracted Revenue */}
                 <div style={{ 
-                  background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
+                  background: '#ffffff', boxShadow: 'none', 
                   border: '1px solid #cbd5e1', 
                   padding: '1.25rem', 
                   textAlign: 'center', 
-                  borderRadius: '2px'
+                  borderRadius: 0
                 }}>
-                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#0d213f', fontFamily: 'monospace' }}>
+                  <div style={{ fontSize: '24px', fontWeight: 600, color: '#18181b', fontFamily: 'var(--font-mono)' }}>
                     {appStatus === 'processing' ? (
                       <div className="skeleton skeleton-heading"></div>
                     ) : (
                       detectedParams ? formatToCr(detectedParams.revenue) : '₹ 0.00 Cr'
                     )}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#8a99a8', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                  <div style={{ fontSize: '11px', color: '#71717a', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                     Annual Turnover Match
                   </div>
                 </div>
@@ -912,7 +906,7 @@ export default function EngineView() {
                   borderLeft: decisionStyle ? `4px solid ${decisionStyle.border}` : '1px solid #cbd5e1',
                   padding: '1.25rem', 
                   textAlign: 'center', 
-                  borderRadius: '2px'
+                  borderRadius: 0
                 }}>
                   <div style={{ 
                     display: 'flex',
@@ -920,9 +914,9 @@ export default function EngineView() {
                     justifyContent: 'center',
                     gap: '6px',
                     fontSize: '18px', 
-                    fontWeight: 700, 
-                    color: decisionStyle ? decisionStyle.color : '#0d213f', 
-                    fontFamily: 'monospace',
+                    fontWeight: 600, 
+                    color: decisionStyle ? decisionStyle.color : '#18181b', 
+                    fontFamily: 'var(--font-mono)',
                     whiteSpace: 'nowrap',
                     overflowY: 'auto',
                     textOverflow: 'ellipsis'
@@ -936,7 +930,7 @@ export default function EngineView() {
                       </>
                     )}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#8a99a8', marginTop: '8px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                  <div style={{ fontSize: '11px', color: '#71717a', marginTop: '8px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                     System Decision Recommendation
                   </div>
                 </div>
@@ -944,24 +938,24 @@ export default function EngineView() {
 
               {/* MAIN CONTAINER (DARK HEADER BANNER + TABLE CARD) */}
               <div style={{ 
-                background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
+                background: '#ffffff', boxShadow: 'none', 
                 border: '1px solid #cbd5e1', 
-                borderRadius: '2px', 
+                borderRadius: 0, 
                 display: 'flex', 
                 flexDirection: 'column'
               }}>
                 
-                {/* Main Header Banner (Background: #2c3540) */}
+                {/* Main Header Banner (Background: #27272a) */}
                 <div style={{ 
-                  background: '#2c3540', 
-                  color: '#ffffff', 
+                  background: '#ffffff', 
+                  color: '#18181b', 
                   padding: '0.75rem 1.25rem', 
                   borderBottom: '1px solid var(--border-light)'
                 }}>
-                  <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                  <div style={{ fontWeight: 600, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                     {appStatus === 'complete' ? 'UNDERWRITING ANALYSIS RESULTS' : 'APPRAISAL DOSSIER INGESTION'}
                   </div>
-                  <div style={{ fontSize: '10px', color: '#8a99a8', marginTop: '2px' }}>
+                  <div style={{ fontSize: '10px', color: '#71717a', marginTop: '2px' }}>
                     {appStatus === 'complete' 
                       ? `Summary analysis for borrower: ${detectedParams?.company}` 
                       : 'Submit a financial audit PDF file to run the credit valuation pipeline'}
@@ -986,18 +980,18 @@ export default function EngineView() {
                           alignItems: 'center', 
                           justifyContent: 'center', 
                           padding: '2.5rem 1.5rem',
-                          border: isDragging ? '2px dashed #0d213f' : '1px dashed #cbd5e1',
-                          background: isDragging ? '#eef2ff' : '#f8fafc',
+                          border: isDragging ? '2px dashed #18181b' : '1px dashed #cbd5e1',
+                          background: isDragging ? '#eef2ff' : '#fafafa',
                           textAlign: 'center',
                           transition: 'all 0.2s ease',
-                          borderRadius: '4px'
+                          borderRadius: 0
                         }}>
-                        <Upload size={36} color="#0d213f" style={{ marginBottom: '0.75rem' }} />
+                        <Upload size={36} color="#18181b" style={{ marginBottom: '0.75rem' }} />
                         
-                        <div style={{ fontWeight: 700, color: '#0d213f', fontSize: '14px' }}>
+                        <div style={{ fontWeight: 600, color: '#18181b', fontSize: '14px' }}>
                           Drag and drop financial PDFs or entire folders here
                         </div>
-                        <div style={{ fontSize: '11px', color: '#8a99a8', marginTop: '4px', marginBottom: '1rem' }}>
+                        <div style={{ fontSize: '11px', color: '#71717a', marginTop: '4px', marginBottom: '1rem' }}>
                           Supports nested directory upload, multi-file batching, and asynchronous task queue processing
                         </div>
 
@@ -1007,13 +1001,13 @@ export default function EngineView() {
                             onClick={() => fileInputRef.current?.click()}
                             style={{ 
                               background: '#ffffff', 
-                              color: '#0d213f', 
+                              color: '#18181b', 
                               border: '1px solid #cbd5e1', 
                               padding: '0.4rem 0.9rem', 
                               fontWeight: 600, 
                               fontSize: '11px',
                               cursor: 'pointer',
-                              borderRadius: '2px',
+                              borderRadius: 0,
                               display: 'flex',
                               alignItems: 'center',
                               gap: '6px'
@@ -1027,13 +1021,13 @@ export default function EngineView() {
                             onClick={() => folderInputRef.current?.click()}
                             style={{ 
                               background: '#ffffff', 
-                              color: '#0d213f', 
+                              color: '#18181b', 
                               border: '1px solid #cbd5e1', 
                               padding: '0.4rem 0.9rem', 
                               fontWeight: 600, 
                               fontSize: '11px',
                               cursor: 'pointer',
-                              borderRadius: '2px',
+                              borderRadius: 0,
                               display: 'flex',
                               alignItems: 'center',
                               gap: '6px'
@@ -1067,14 +1061,14 @@ export default function EngineView() {
                       {queueItems.length > 0 && (
                         <div style={{ 
                           border: '1px solid #cbd5e1', 
-                          borderRadius: '2px', 
+                          borderRadius: 0, 
                           background: '#ffffff',
                           display: 'flex',
                           flexDirection: 'column'
                         }}>
                           {/* Queue Header & Actions */}
                           <div style={{ 
-                            background: '#f8fafc', 
+                            background: '#fafafa', 
                             padding: '0.75rem 1rem', 
                             borderBottom: '1px solid #cbd5e1',
                             display: 'flex',
@@ -1084,10 +1078,10 @@ export default function EngineView() {
                             gap: '0.75rem'
                           }}>
                             <div>
-                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#0d213f', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                              <div style={{ fontWeight: 600, fontSize: '12px', color: '#18181b', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                                 Ingestion Staging Queue ({queueItems.length} File{queueItems.length === 1 ? '' : 's'})
                               </div>
-                              <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px', fontFamily: 'monospace' }}>
+                              <div style={{ fontSize: '11px', color: '#71717a', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
                                 Completed: {queueItems.filter(i => i.status === 'completed').length} | Staged: {queueItems.filter(i => i.status === 'staged').length} | Failed: {queueItems.filter(i => i.status === 'failed').length}
                               </div>
                             </div>
@@ -1100,14 +1094,14 @@ export default function EngineView() {
                                   onClick={resumeAllFailedTasks}
                                   disabled={isProcessingQueue}
                                   style={{
-                                    background: '#d97706',
+                                    background: '#18181b',
                                     color: '#ffffff',
                                     border: 'none',
                                     padding: '0.4rem 0.85rem',
                                     fontSize: '11px',
-                                    fontWeight: 700,
+                                    fontWeight: 600,
                                     cursor: isProcessingQueue ? 'not-allowed' : 'pointer',
-                                    borderRadius: '2px',
+                                    borderRadius: 0,
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '5px'
@@ -1123,14 +1117,14 @@ export default function EngineView() {
                                 onClick={() => runAllQueueTasks()}
                                 disabled={isProcessingQueue || queueItems.every(i => i.status === 'completed')}
                                 style={{
-                                  background: isProcessingQueue ? '#64748b' : '#0d213f',
+                                  background: isProcessingQueue ? '#71717a' : '#18181b',
                                   color: '#ffffff',
                                   border: 'none',
                                   padding: '0.4rem 0.85rem',
                                   fontSize: '11px',
-                                  fontWeight: 700,
+                                  fontWeight: 600,
                                   cursor: isProcessingQueue ? 'not-allowed' : 'pointer',
-                                  borderRadius: '2px',
+                                  borderRadius: 0,
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: '5px'
@@ -1146,12 +1140,12 @@ export default function EngineView() {
                                 style={{
                                   background: 'none',
                                   color: '#ef4444',
-                                  border: '1px solid #fca5a5',
+                                  border: '1px solid #e4e4e7',
                                   padding: '0.4rem 0.6rem',
                                   fontSize: '11px',
                                   fontWeight: 600,
                                   cursor: 'pointer',
-                                  borderRadius: '2px'
+                                  borderRadius: 0
                                 }}>
                                 Clear Queue
                               </button>
@@ -1162,49 +1156,49 @@ export default function EngineView() {
                           <div style={{ overflowX: 'auto' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', textAlign: 'left' }}>
                               <thead>
-                                <tr style={{ borderBottom: '1px solid #cbd5e1', color: '#64748b', background: '#f1f5f9', textTransform: 'uppercase' }}>
-                                  <th style={{ padding: '0.6rem 0.75rem', fontWeight: 700 }}>File / Relative Path</th>
-                                  <th style={{ padding: '0.6rem 0.75rem', fontWeight: 700, width: '90px' }}>Size</th>
-                                  <th style={{ padding: '0.6rem 0.75rem', fontWeight: 700, width: '130px' }}>Queue Status</th>
-                                  <th style={{ padding: '0.6rem 0.75rem', fontWeight: 700, width: '150px' }}>Task Progress</th>
-                                  <th style={{ padding: '0.6rem 0.75rem', fontWeight: 700, width: '110px', textAlign: 'right' }}>Actions</th>
+                                <tr style={{ borderBottom: '1px solid #cbd5e1', color: '#71717a', background: '#f4f4f5', textTransform: 'uppercase' }}>
+                                  <th style={{ padding: '0.6rem 0.75rem', fontWeight: 600 }}>File / Relative Path</th>
+                                  <th style={{ padding: '0.6rem 0.75rem', fontWeight: 600, width: '90px' }}>Size</th>
+                                  <th style={{ padding: '0.6rem 0.75rem', fontWeight: 600, width: '130px' }}>Queue Status</th>
+                                  <th style={{ padding: '0.6rem 0.75rem', fontWeight: 600, width: '150px' }}>Task Progress</th>
+                                  <th style={{ padding: '0.6rem 0.75rem', fontWeight: 600, width: '110px', textAlign: 'right' }}>Actions</th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {queueItems.map((item) => (
-                                  <tr key={item.id} style={{ borderBottom: '1px solid #e2e8f0', background: activeQueueItemId === item.id ? '#f8fafc' : '#ffffff' }}>
+                                  <tr key={item.id} style={{ borderBottom: '1px solid #e4e4e7', background: activeQueueItemId === item.id ? '#fafafa' : '#ffffff' }}>
                                     {/* Name & Path */}
-                                    <td style={{ padding: '0.6rem 0.75rem', fontFamily: 'monospace', color: '#1e293b' }}>
+                                    <td style={{ padding: '0.6rem 0.75rem', fontFamily: 'var(--font-mono)', color: '#27272a' }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        {item.path.includes('/') ? <Folder size={14} color="#0d213f" /> : <FileText size={14} color="#64748b" />}
+                                        {item.path.includes('/') ? <Folder size={14} color="#18181b" /> : <FileText size={14} color="#64748b" />}
                                         <span style={{ fontWeight: 600 }}>{item.path}</span>
                                       </div>
                                     </td>
 
                                     {/* File Size */}
-                                    <td style={{ padding: '0.6rem 0.75rem', color: '#64748b', fontFamily: 'monospace' }}>
+                                    <td style={{ padding: '0.6rem 0.75rem', color: '#71717a', fontFamily: 'var(--font-mono)' }}>
                                       {(item.size / 1024).toFixed(1)} KB
                                     </td>
 
                                     {/* Status Badge */}
                                     <td style={{ padding: '0.6rem 0.75rem' }}>
                                       {item.status === 'staged' && (
-                                        <span style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #93c5fd', padding: '2px 6px', borderRadius: '2px', fontWeight: 700, fontSize: '10px' }}>
+                                        <span style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #93c5fd', padding: '2px 6px', borderRadius: 0, fontWeight: 600, fontSize: '10px' }}>
                                           STAGED
                                         </span>
                                       )}
                                       {item.status === 'processing' && (
-                                        <span style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fcd34d', padding: '2px 6px', borderRadius: '2px', fontWeight: 700, fontSize: '10px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                        <span style={{ background: '#f4f4f5', color: '#18181b', border: '1px solid #e4e4e7', padding: '2px 6px', borderRadius: 0, fontWeight: 600, fontSize: '10px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                           <Loader2 className="spin" size={10} /> {item.step}
                                         </span>
                                       )}
                                       {item.status === 'completed' && (
-                                        <span style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #6ee7b7', padding: '2px 6px', borderRadius: '2px', fontWeight: 700, fontSize: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                        <span style={{ background: '#f4f4f5', color: '#18181b', border: '1px solid #e4e4e7', padding: '2px 6px', borderRadius: 0, fontWeight: 600, fontSize: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                                           <CheckCircle2 size={10} /> COMPLETED
                                         </span>
                                       )}
                                       {item.status === 'failed' && (
-                                        <span style={{ background: '#fff1f2', color: '#b91c1c', border: '1px solid #fca5a5', padding: '2px 6px', borderRadius: '2px', fontWeight: 700, fontSize: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                        <span style={{ background: '#f4f4f5', color: '#18181b', border: '1px solid #e4e4e7', padding: '2px 6px', borderRadius: 0, fontWeight: 600, fontSize: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                                           <XCircle size={10} /> FAILED
                                         </span>
                                       )}
@@ -1212,15 +1206,15 @@ export default function EngineView() {
 
                                     {/* Progress Bar */}
                                     <td style={{ padding: '0.6rem 0.75rem' }}>
-                                      <div style={{ width: '100%', background: '#e2e8f0', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+                                      <div style={{ width: '100%', background: '#e4e4e7', height: '8px', borderRadius: 0, overflow: 'hidden' }}>
                                         <div style={{ 
                                           width: `${item.progress}%`, 
                                           height: '100%', 
-                                          background: item.status === 'failed' ? '#ef4444' : item.status === 'completed' ? '#10b981' : '#0d213f',
+                                          background: item.status === 'failed' ? '#ef4444' : item.status === 'completed' ? '#18181b' : '#18181b',
                                           transition: 'width 0.3s ease'
                                         }}></div>
                                       </div>
-                                      <div style={{ fontSize: '9px', color: '#64748b', fontFamily: 'monospace', marginTop: '2px' }}>
+                                      <div style={{ fontSize: '9px', color: '#71717a', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
                                         {item.progress}%
                                       </div>
                                     </td>
@@ -1232,7 +1226,7 @@ export default function EngineView() {
                                           <button
                                             type="button"
                                             onClick={() => resumeFailedTask(item.id)}
-                                            style={{ background: '#d97706', color: '#ffffff', border: 'none', padding: '2px 6px', borderRadius: '2px', cursor: 'pointer', fontWeight: 600, fontSize: '10px', display: 'flex', alignItems: 'center', gap: '3px' }}
+                                            style={{ background: '#18181b', color: '#ffffff', border: 'none', padding: '2px 6px', borderRadius: 0, cursor: 'pointer', fontWeight: 600, fontSize: '10px', display: 'flex', alignItems: 'center', gap: '3px' }}
                                             title="Resume Failed Task">
                                             <RefreshCw size={10} />
                                             <span>Resume</span>
@@ -1249,7 +1243,7 @@ export default function EngineView() {
                                               setFinalScore(item.resultData.finalScore);
                                               setAppStatus('complete');
                                             }}
-                                            style={{ background: '#0d213f', color: '#ffffff', border: 'none', padding: '2px 6px', borderRadius: '2px', cursor: 'pointer', fontWeight: 600, fontSize: '10px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                            style={{ background: '#18181b', color: '#ffffff', border: 'none', padding: '2px 6px', borderRadius: 0, cursor: 'pointer', fontWeight: 600, fontSize: '10px', display: 'flex', alignItems: 'center', gap: '3px' }}>
                                             <Eye size={10} />
                                             <span>View</span>
                                           </button>
@@ -1273,38 +1267,61 @@ export default function EngineView() {
                     </div>
                   )}
 
-                  {/* Processing state — live-scrolling terminal log panel */}
+                  {/* Processing state - Pipeline Stages Animation */}
                   {appStatus === 'processing' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '1.5rem 1rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <Loader2 className="spin" size={22} color="#0d213f" />
-                        <span style={{ fontWeight: 700, color: '#2c3540', fontFamily: 'monospace' }}>RUNNING PIPELINE AGENTS...</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', padding: '2rem 1rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6rem' }}>
+                        <Loader2 className="spin" size={28} color="#18181b" />
+                        <span style={{ fontWeight: 700, color: '#18181b', fontFamily: 'var(--font-mono)', fontSize: '14px', letterSpacing: '0.05em' }}>
+                          ORCHESTRATING APPRAISAL PIPELINE
+                        </span>
+                        <div style={{ fontSize: '11px', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                          Please wait while agents synthesize the memorandum
+                        </div>
                       </div>
-                      <div className="progress-container" style={{ width: '80%' }}>
-                        <div className="progress-bar" style={{ width: `${progress}%` }}></div>
+
+                      <div className="progress-container" style={{ width: '100%', height: '4px', background: '#e2e8f0', overflow: 'hidden' }}>
+                        <div className="progress-bar" style={{ width: `${progress}%`, height: '100%', background: '#18181b', transition: 'width 0.5s ease-out' }}></div>
                       </div>
-                      <div style={{ fontSize: '11px', color: '#8a99a8', fontWeight: 600, fontFamily: 'monospace' }}>
-                        {progress}% COMPLETE
-                      </div>
-                      <div
-                        role="log"
-                        aria-live="polite"
-                        style={{
-                          width: '100%',
-                          background: '#1f262d',
-                          color: '#10b981',
-                          padding: '0.75rem',
-                          fontFamily: 'monospace',
-                          fontSize: '11px',
-                          maxHeight: '260px',
-                          overflowY: 'auto',
-                          borderRadius: '2px'
-                        }}
-                      >
-                        {logs.map((log, idx) => (
-                          <div key={idx} style={{ color: log.includes('FATAL') || log.includes('WARNING') ? '#ef4444' : '#10b981' }}>{log}</div>
-                        ))}
-                        <div ref={processingLogEndRef} />
+
+                      {/* Pipeline Stages */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '600px', margin: '0 auto' }}>
+                        {[
+                          { step: 1, label: 'Document OCR & Digital Extraction', threshold: 0 },
+                          { step: 2, label: 'Financial Normalization & Sanity Checks', threshold: 25 },
+                          { step: 3, label: 'Sector Context & Headwinds Analysis', threshold: 50 },
+                          { step: 4, label: 'Real-time Web Research & Risk Audits', threshold: 75 },
+                          { step: 5, label: 'Credit Appraisal Memorandum Synthesis', threshold: 90 }
+                        ].map((stage, idx) => {
+                          const isComplete = progress > stage.threshold;
+                          const isActive = progress >= (idx === 0 ? 0 : [0, 25, 50, 75, 90][idx - 1]) && progress <= stage.threshold;
+                          const isPending = progress < (idx === 0 ? 0 : [0, 25, 50, 75, 90][idx - 1]);
+
+                          let color = '#a1a1aa'; // Pending
+                          let icon = <div style={{ width: '12px', height: '12px', borderRadius: '50%', border: '2px solid #e4e4e7' }}></div>;
+                          
+                          if (isComplete) {
+                            color = '#18181b'; // Done
+                            icon = <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#18181b' }}></div>;
+                          } else if (isActive) {
+                            color = '#2563eb'; // Active
+                            icon = <Loader2 className="spin" size={14} color="#2563eb" />;
+                          }
+
+                          return (
+                            <div key={stage.step} style={{ display: 'flex', alignItems: 'center', gap: '1rem', opacity: isPending ? 0.5 : 1 }}>
+                              <div style={{ width: '20px', display: 'flex', justifyContent: 'center' }}>
+                                {icon}
+                              </div>
+                              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: color, fontWeight: isActive ? 600 : 400, flex: 1 }}>
+                                {stage.label}
+                              </div>
+                              <div style={{ fontSize: '10px', color: '#a1a1aa', textTransform: 'uppercase' }}>
+                                {isComplete ? 'COMPLETED' : isActive ? 'IN PROGRESS...' : 'PENDING'}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -1314,8 +1331,8 @@ export default function EngineView() {
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 1rem', gap: '0.75rem', color: '#ef4444' }}>
                       <AlertTriangle size={28} />
                       <span style={{ fontWeight: 800 }}>TRANSACTION ERROR DECLARED</span>
-                      <p style={{ color: '#8a99a8', fontSize: '11px', textAlign: 'center', margin: 0, fontFamily: 'monospace' }}>{errorMessage}</p>
-                      <button onClick={resetState} style={{ marginTop: '0.5rem', background: '#0d213f', color: '#ffffff', border: 'none', padding: '0.4rem 1rem', cursor: 'pointer', borderRadius: '2px', fontWeight: 600 }}>
+                      <p style={{ color: '#71717a', fontSize: '11px', textAlign: 'center', margin: 0, fontFamily: 'var(--font-mono)' }}>{errorMessage}</p>
+                      <button onClick={resetState} style={{ marginTop: '0.5rem', background: '#18181b', color: '#ffffff', border: 'none', padding: '0.4rem 1rem', cursor: 'pointer', borderRadius: 0, fontWeight: 600 }}>
                         Retry Ingestion
                       </button>
                     </div>
@@ -1327,7 +1344,7 @@ export default function EngineView() {
                       
                       {/* Inside Container Navigation Tabs */}
                       <div style={{ display: 'flex', borderBottom: '1px solid #cbd5e1', gap: '0.25rem' }}>
-                        {['CREDIT APPRAISAL', 'FINANCIAL STATEMENTS', 'OSINT REGISTRY', 'SYSTEM LOGS'].map(tab => (
+                        {['EXECUTIVE SUMMARY', 'CREDIT ASSESSMENT (5Cs)', 'RISKS & GAPS', 'SYSTEM LOGS'].map(tab => (
                           <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
@@ -1335,10 +1352,10 @@ export default function EngineView() {
                               padding: '0.5rem 1rem', 
                               background: 'none', 
                               border: 'none', 
-                              borderBottom: activeTab === tab ? '2px solid #0d213f' : '2px solid transparent', 
+                              borderBottom: activeTab === tab ? '2px solid #18181b' : '2px solid transparent', 
                               fontSize: '11px', 
-                              fontWeight: 700, 
-                              color: activeTab === tab ? '#0d213f' : '#8a99a8', 
+                              fontWeight: 600, 
+                              color: activeTab === tab ? '#18181b' : '#71717a', 
                               cursor: 'pointer',
                               textTransform: 'uppercase',
                               letterSpacing: '0.03em',
@@ -1354,19 +1371,19 @@ export default function EngineView() {
                       <div style={{ minHeight: '200px' }}>
                         
                         {/* Tab 1: Credit Appraisal Ledger */}
-                        {activeTab === 'CREDIT APPRAISAL' && (
+                        {(activeTab === 'EXECUTIVE SUMMARY' || activeTab === 'CREDIT ASSESSMENT (5Cs)') && (
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
                             <thead>
-                              <tr style={{ borderBottom: '1px solid #cbd5e1', color: '#8a99a8', textTransform: 'uppercase', fontSize: '10px' }}>
-                                <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700 }}>C-Factor Parameter</th>
-                                <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700 }}>Extraction Appraisal Assessment</th>
+                              <tr style={{ borderBottom: '1px solid #cbd5e1', color: '#71717a', textTransform: 'uppercase', fontSize: '10px' }}>
+                                <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600 }}>C-Factor Parameter</th>
+                                <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600 }}>Extraction Appraisal Assessment</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {Object.entries(camReport.five_cs).map(([key, val]) => (
+                              {Object.entries(camReport?.five_cs || {}).map(([key, val]) => (
                                 <tr key={key} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                  <td style={{ padding: '0.6rem 0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#2c3540', fontFamily: 'monospace', width: '150px' }}>{key}</td>
-                                  <td style={{ padding: '0.6rem 0.75rem', color: '#506070', lineHeight: '1.4' }}>
+                                  <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, textTransform: 'uppercase', color: '#27272a', fontFamily: 'var(--font-mono)', width: '150px' }}>{key}</td>
+                                  <td style={{ padding: '0.6rem 0.75rem', color: '#71717a', lineHeight: '1.4' }}>
                                     {typeof val === 'string' ? val : (val.text || val.assessment)}
                                   </td>
                                 </tr>
@@ -1376,75 +1393,75 @@ export default function EngineView() {
                         )}
 
                         {/* Tab 2: Financial Statements Table */}
-                        {activeTab === 'FINANCIAL STATEMENTS' && (
+                        {(activeTab === 'CREDIT ASSESSMENT (5Cs)' || activeTab === 'FINANCIAL STATEMENTS') && (
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
                             <thead>
-                              <tr style={{ borderBottom: '1px solid #cbd5e1', color: '#8a99a8', textTransform: 'uppercase', fontSize: '10px' }}>
-                                <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700 }}>Ledger Entry Description</th>
-                                <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700, textAlign: 'right' }}>Declared Value (INR)</th>
-                                <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700, textAlign: 'right' }}>Audit Status</th>
+                              <tr style={{ borderBottom: '1px solid #cbd5e1', color: '#71717a', textTransform: 'uppercase', fontSize: '10px' }}>
+                                <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600 }}>Ledger Entry Description</th>
+                                <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600, textAlign: 'right' }}>Declared Value (INR)</th>
+                                <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600, textAlign: 'right' }}>Audit Status</th>
                               </tr>
                             </thead>
                             <tbody>
                               <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600 }}>Total Revenue (GSTR Correlation)</td>
-                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 700, textAlign: 'right', fontFamily: 'monospace', color: '#0d213f' }}>{formatToCr(detectedParams.revenue)}</td>
-                                <td style={{ padding: '0.6rem 0.75rem', color: '#10b981', fontWeight: 700, textAlign: 'right', fontFamily: 'monospace' }}>VERIFIED</td>
+                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)', color: '#18181b' }}>{formatToCr(detectedParams.revenue)}</td>
+                                <td style={{ padding: '0.6rem 0.75rem', color: '#18181b', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)' }}>VERIFIED</td>
                               </tr>
                               <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600 }}>Total Financial Borrowings (Bank Ledger)</td>
-                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 700, textAlign: 'right', fontFamily: 'monospace', color: '#0d213f' }}>{formatToCr(detectedParams.debt)}</td>
-                                <td style={{ padding: '0.6rem 0.75rem', color: '#10b981', fontWeight: 700, textAlign: 'right', fontFamily: 'monospace' }}>VERIFIED</td>
+                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)', color: '#18181b' }}>{formatToCr(detectedParams.debt)}</td>
+                                <td style={{ padding: '0.6rem 0.75rem', color: '#18181b', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)' }}>VERIFIED</td>
                               </tr>
                               <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600 }}>Shareholder Net Worth</td>
-                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 700, textAlign: 'right', fontFamily: 'monospace', color: '#0d213f' }}>{formatToCr(detectedParams.worth)}</td>
-                                <td style={{ padding: '0.6rem 0.75rem', color: '#0d213f', fontWeight: 700, textAlign: 'right', fontFamily: 'monospace' }}>EXTRACTED</td>
+                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)', color: '#18181b' }}>{formatToCr(detectedParams.worth)}</td>
+                                <td style={{ padding: '0.6rem 0.75rem', color: '#18181b', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)' }}>EXTRACTED</td>
                               </tr>
                             </tbody>
                           </table>
                         )}
 
                         {/* Tab 3: OSINT litigation Registry */}
-                        {activeTab === 'OSINT REGISTRY' && (
+                        {(activeTab === 'RISKS & GAPS' || activeTab === 'OSINT REGISTRY') && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                             {osintData ? (
                               <>
-                                <div style={{ padding: '0.75rem', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '2px' }}>
-                                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#2c3540', fontFamily: 'monospace' }}>[LITIGATION] INDIAN_COURTS_INDEX_SEARCH</span>
+                                <div style={{ padding: '0.75rem', background: '#fafafa', border: '1px solid #cbd5e1', borderRadius: 0 }}>
+                                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#27272a', fontFamily: 'var(--font-mono)' }}>[LITIGATION] INDIAN_COURTS_INDEX_SEARCH</span>
                                   {osintData.litigation_signals && osintData.litigation_signals.length > 0 ? (
-                                    <ul style={{ margin: '8px 0 0 16px', color: '#506070', lineHeight: '1.4', padding: 0 }}>
+                                    <ul style={{ margin: '8px 0 0 16px', color: '#71717a', lineHeight: '1.4', padding: 0 }}>
                                       {osintData.litigation_signals.map((sig, i) => <li key={i}>{sig}</li>)}
                                     </ul>
                                   ) : (
-                                    <p style={{ margin: '4px 0 0 0', color: '#506070', lineHeight: '1.4' }}>No active debt declarations or pending credit recovery lawsuits found.</p>
+                                    <p style={{ margin: '4px 0 0 0', color: '#71717a', lineHeight: '1.4' }}>No active debt declarations or pending credit recovery lawsuits found.</p>
                                   )}
                                 </div>
-                                <div style={{ padding: '0.75rem', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '2px' }}>
-                                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#2c3540', fontFamily: 'monospace' }}>[NEWS] COMPANY_WEB_CRAWL</span>
+                                <div style={{ padding: '0.75rem', background: '#fafafa', border: '1px solid #cbd5e1', borderRadius: 0 }}>
+                                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#27272a', fontFamily: 'var(--font-mono)' }}>[NEWS] COMPANY_WEB_CRAWL</span>
                                   {osintData.company_news && osintData.company_news.length > 0 ? (
-                                    <ul style={{ margin: '8px 0 0 16px', color: '#506070', lineHeight: '1.4', padding: 0 }}>
+                                    <ul style={{ margin: '8px 0 0 16px', color: '#71717a', lineHeight: '1.4', padding: 0 }}>
                                       {osintData.company_news.map((news, i) => <li key={i}>{news}</li>)}
                                     </ul>
                                   ) : (
-                                    <p style={{ margin: '4px 0 0 0', color: '#506070', lineHeight: '1.4' }}>No significant company news or red flags found.</p>
+                                    <p style={{ margin: '4px 0 0 0', color: '#71717a', lineHeight: '1.4' }}>No adverse media or critical systemic alerts detected in open-source databases.</p>
                                   )}
                                 </div>
-                                <div style={{ padding: '0.75rem', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '2px' }}>
-                                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#2c3540', fontFamily: 'monospace' }}>[SECTOR] RBI_HEADWINDS_MONITOR</span>
+                                <div style={{ padding: '0.75rem', background: '#fafafa', border: '1px solid #cbd5e1', borderRadius: 0 }}>
+                                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#27272a', fontFamily: 'var(--font-mono)' }}>[SECTOR] RBI_HEADWINDS_MONITOR</span>
                                   {osintData.sector_headwinds && osintData.sector_headwinds.length > 0 ? (
-                                    <ul style={{ margin: '8px 0 0 16px', color: '#506070', lineHeight: '1.4', padding: 0 }}>
+                                    <ul style={{ margin: '8px 0 0 16px', color: '#71717a', lineHeight: '1.4', padding: 0 }}>
                                       {osintData.sector_headwinds.map((alert, i) => <li key={i}>{alert}</li>)}
                                     </ul>
                                   ) : (
-                                    <p style={{ margin: '4px 0 0 0', color: '#506070', lineHeight: '1.4' }}>No major regulatory or sector headwinds detected.</p>
+                                    <p style={{ margin: '4px 0 0 0', color: '#71717a', lineHeight: '1.4' }}>No major regulatory or sector headwinds detected.</p>
                                   )}
                                 </div>
                               </>
                             ) : (
-                              <div style={{ padding: '0.75rem', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '2px' }}>
-                                <span style={{ fontSize: '10px', fontWeight: 800, color: '#2c3540', fontFamily: 'monospace' }}>[OSINT] PENDING</span>
-                                <p style={{ margin: '4px 0 0 0', color: '#506070', lineHeight: '1.4' }}>
+                              <div style={{ padding: '0.75rem', background: '#fafafa', border: '1px solid #cbd5e1', borderRadius: 0 }}>
+                                <span style={{ fontSize: '10px', fontWeight: 800, color: '#27272a', fontFamily: 'var(--font-mono)' }}>[OSINT] PENDING</span>
+                                <p style={{ margin: '4px 0 0 0', color: '#71717a', lineHeight: '1.4' }}>
                                   Waiting for OSINT data to be processed...
                                 </p>
                               </div>
@@ -1456,15 +1473,15 @@ export default function EngineView() {
                         {activeTab === 'SYSTEM LOGS' && (
                           <div style={{ 
                             background: '#1f262d', 
-                            color: '#10b981', 
+                            color: '#a1a1aa', 
                             padding: '0.75rem', 
-                            fontFamily: 'monospace', 
+                            fontFamily: 'var(--font-mono)', 
                             fontSize: '11px',
                             maxHeight: '220px',
                             overflowY: 'auto'
                           }}>
                             {logs.map((log, idx) => (
-                              <div key={idx} style={{ color: log.includes('FATAL') || log.includes('WARNING') ? '#ef4444' : '#10b981' }}>{log}</div>
+                              <div key={idx} style={{ color: log.includes('FATAL') || log.includes('WARNING') ? '#ef4444' : '#a1a1aa' }}>{log}</div>
                             ))}
                             <div ref={logEndRef} />
                           </div>
@@ -1486,13 +1503,13 @@ export default function EngineView() {
                           display: 'flex', 
                           alignItems: 'center', 
                           gap: '2rem',
-                          background: '#f8fafc',
+                          background: '#fafafa',
                           padding: '0.75rem 1.5rem',
                           border: '1px solid #cbd5e1',
-                          borderRadius: '2px'
+                          borderRadius: 0
                         }}>
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span style={{ fontSize: '9px', color: '#8a99a8', fontWeight: 700, textTransform: 'uppercase' }}>DECISION</span>
+                            <span style={{ fontSize: '9px', color: '#71717a', fontWeight: 600, textTransform: 'uppercase' }}>DECISION</span>
                             <span style={{ 
                               display: 'flex',
                               alignItems: 'center',
@@ -1500,25 +1517,25 @@ export default function EngineView() {
                               fontWeight: 900, 
                               color: decisionStyle.color, 
                               fontSize: '14px',
-                              fontFamily: 'monospace'
+                              fontFamily: 'var(--font-mono)'
                             }}>
                               <decisionStyle.Icon size={14} />
                               {decisionStyle.label}
                             </span>
                           </div>
                           
-                          <div style={{ width: '1px', height: '24px', background: '#cbd5e1' }} />
+                          <div style={{ width: '1px', height: '24px', background: 'var(--border-light)' }} />
                           
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span style={{ fontSize: '9px', color: '#8a99a8', fontWeight: 700, textTransform: 'uppercase' }}>LIMIT APPROVAL</span>
-                            <span style={{ fontWeight: 800, color: '#2c3540', fontSize: '13px', fontFamily: 'monospace' }}>{camReport.recommended_loan_amount}</span>
+                            <span style={{ fontSize: '9px', color: '#71717a', fontWeight: 600, textTransform: 'uppercase' }}>LIMIT APPROVAL</span>
+                            <span style={{ fontWeight: 800, color: '#27272a', fontSize: '13px', fontFamily: 'var(--font-mono)' }}>{camReport.recommended_loan_amount}</span>
                           </div>
 
-                          <div style={{ width: '1px', height: '24px', background: '#cbd5e1' }} />
+                          <div style={{ width: '1px', height: '24px', background: 'var(--border-light)' }} />
 
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span style={{ fontSize: '9px', color: '#8a99a8', fontWeight: 700, textTransform: 'uppercase' }}>INTEREST RATE</span>
-                            <span style={{ fontWeight: 800, color: '#2c3540', fontSize: '13px', fontFamily: 'monospace' }}>{camReport.recommended_interest_rate}</span>
+                            <span style={{ fontSize: '9px', color: '#71717a', fontWeight: 600, textTransform: 'uppercase' }}>INTEREST RATE</span>
+                            <span style={{ fontWeight: 800, color: '#27272a', fontSize: '13px', fontFamily: 'var(--font-mono)' }}>{camReport.recommended_interest_rate}</span>
                           </div>
                         </div>
 
@@ -1526,18 +1543,18 @@ export default function EngineView() {
                           <button 
                             onClick={handleDownloadPDF}
                             style={{ 
-                              background: '#0d213f', 
+                              background: '#18181b', 
                               color: '#ffffff', 
                               border: 'none', 
                               padding: '0.5rem 1.5rem', 
                               fontSize: '12px',
-                              fontWeight: 700, 
+                              fontWeight: 600, 
                               cursor: 'pointer',
-                              borderRadius: '2px',
+                              borderRadius: 0,
                               transition: 'background 0.15s'
                             }}
                             onMouseEnter={(e) => e.currentTarget.style.background = '#155cb0'}
-                            onMouseLeave={(e) => e.currentTarget.style.background = '#0d213f'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#18181b'}
                           >
                             All Transactions & Appraisal Memo PDF
                           </button>
@@ -1545,14 +1562,14 @@ export default function EngineView() {
                           <button 
                             onClick={resetState}
                             style={{ 
-                              background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
-                              color: '#506070', 
+                              background: '#ffffff', boxShadow: 'none', 
+                              color: '#71717a', 
                               border: '1px solid #cbd5e1', 
                               padding: '0.5rem 1rem', 
                               fontSize: '12px',
-                              fontWeight: 700, 
+                              fontWeight: 600, 
                               cursor: 'pointer',
-                              borderRadius: '2px'
+                              borderRadius: 0
                             }}
                           >
                             Reset Workspace

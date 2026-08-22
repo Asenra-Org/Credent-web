@@ -1,18 +1,17 @@
 import axios from 'axios';
+import { useAuthStore } from '../stores/authStore';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const API_URL = API_BASE.endsWith('/api/v1') ? API_BASE : `${API_BASE.replace(/\/$/, '')}/api/v1`;
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 120000,
+  timeout: 600000,
   withCredentials: true, // CRITICAL: sends refresh_token cookie
 });
 
 // Request interceptor: attach Bearer token
 api.interceptors.request.use((config) => {
-  // Import dynamically to avoid circular deps
-  const { useAuthStore } = require('../stores/authStore');
   const token = useAuthStore.getState().accessToken;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -51,14 +50,12 @@ api.interceptors.response.use(
       isRefreshing = true;
       
       try {
-        const { useAuthStore } = require('../stores/authStore');
         const newToken = await useAuthStore.getState().refresh();
         processQueue(null, newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        const { useAuthStore } = require('../stores/authStore');
         useAuthStore.getState().clearAuth();
         window.location.href = '/login';
         return Promise.reject(refreshError);

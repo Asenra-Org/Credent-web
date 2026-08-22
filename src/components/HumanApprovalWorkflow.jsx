@@ -266,7 +266,7 @@ export default function HumanApprovalWorkflow({
           animate={{ opacity: 1, y: 0 }}
           style={{
             padding: '0.75rem 1rem',
-            borderRadius: '0px',
+            borderRadius: 0,
             background: localFeedback.type === 'success' ? '#f4f4f5' : '#f4f4f5',
             border: `1px solid ${localFeedback.type === 'success' ? '#18181b' : '#71717a'}`,
             color: localFeedback.type === 'success' ? '#18181b' : '#71717a',
@@ -298,7 +298,7 @@ export default function HumanApprovalWorkflow({
         style={{
           background: '#f9fafb',
           border: '1px solid #e4e4e7',
-          borderRadius: '0px',
+          borderRadius: 0,
           padding: '1.25rem',
           position: 'relative'
         }}
@@ -309,7 +309,7 @@ export default function HumanApprovalWorkflow({
             <div style={{
               width: '28px',
               height: '28px',
-              borderRadius: '0px',
+              borderRadius: 0,
               background: '#f4f4f5',
               color: '#18181b',
               display: 'flex',
@@ -333,7 +333,7 @@ export default function HumanApprovalWorkflow({
               fontSize: '0.625rem',
               fontWeight: 800,
               padding: '3px 8px',
-              borderRadius: '0px',
+              borderRadius: 0,
               background: '#f4f4f5',
               color: '#18181b',
               border: '1px solid rgba(14, 165, 233, 0.3)',
@@ -360,7 +360,7 @@ export default function HumanApprovalWorkflow({
           <div style={{
             background: '#ffffff',
             border: '1px solid #e4e4e7',
-            borderRadius: '0px',
+            borderRadius: 0,
             padding: '0.75rem'
           }}>
             <div style={{ fontSize: '0.625rem', color: '#71717a', fontWeight: 700, textTransform: 'uppercase' }}>
@@ -372,7 +372,7 @@ export default function HumanApprovalWorkflow({
               </span>
               <span style={{ fontSize: '0.75rem', color: '#71717a' }}>/ 100</span>
             </div>
-            <div style={{ width: '100%', height: '4px', background: '#e4e4e7', borderRadius: '0px', marginTop: '6px', overflow: 'hidden' }}>
+            <div style={{ width: '100%', height: '4px', background: '#e4e4e7', borderRadius: 0, marginTop: '6px', overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${Math.min(100, Math.max(0, aiScore))}%`, background: riskLevelTheme.color }} />
             </div>
           </div>
@@ -381,7 +381,7 @@ export default function HumanApprovalWorkflow({
           <div style={{
             background: '#ffffff',
             border: '1px solid #e4e4e7',
-            borderRadius: '0px',
+            borderRadius: 0,
             padding: '0.75rem'
           }}>
             <div style={{ fontSize: '0.625rem', color: '#71717a', fontWeight: 700, textTransform: 'uppercase' }}>
@@ -392,7 +392,7 @@ export default function HumanApprovalWorkflow({
                 display: 'inline-flex',
                 alignItems: 'center',
                 padding: '2px 8px',
-                borderRadius: '0px',
+                borderRadius: 0,
                 background: riskLevelTheme.bg,
                 color: riskLevelTheme.color,
                 border: `1px solid ${riskLevelTheme.border}`,
@@ -409,7 +409,7 @@ export default function HumanApprovalWorkflow({
           <div style={{
             background: '#ffffff',
             border: '1px solid #e4e4e7',
-            borderRadius: '0px',
+            borderRadius: 0,
             padding: '0.75rem'
           }}>
             <div style={{ fontSize: '0.625rem', color: '#71717a', fontWeight: 700, textTransform: 'uppercase' }}>
@@ -418,7 +418,7 @@ export default function HumanApprovalWorkflow({
             <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{
                 padding: '2px 8px',
-                borderRadius: '0px',
+                borderRadius: 0,
                 background: aiRecNorm === 'APPROVE' ? '#f4f4f5' : aiRecNorm === 'REJECT' ? '#f4f4f5' : '#f4f4f5',
                 color: aiRecNorm === 'APPROVE' ? '#18181b' : aiRecNorm === 'REJECT' ? '#71717a' : '#71717a',
                 fontSize: '0.75rem',
@@ -434,7 +434,7 @@ export default function HumanApprovalWorkflow({
           <div style={{
             background: '#ffffff',
             border: '1px solid #e4e4e7',
-            borderRadius: '0px',
+            borderRadius: 0,
             padding: '0.75rem'
           }}>
             <div style={{ fontSize: '0.625rem', color: '#71717a', fontWeight: 700, textTransform: 'uppercase' }}>
@@ -455,7 +455,7 @@ export default function HumanApprovalWorkflow({
           <div style={{
             background: '#ffffff',
             border: '1px solid #e4e4e7',
-            borderRadius: '0px',
+            borderRadius: 0,
             padding: '0.75rem',
             fontSize: '0.75rem',
             color: '#3f3f46',
@@ -496,7 +496,7 @@ export default function HumanApprovalWorkflow({
         style={{
           background: '#ffffff',
           border: '1px solid #e4e4e7',
-          borderRadius: '0px',
+          borderRadius: 0,
           padding: '1.25rem',
           boxShadow: 'none'
         }}
@@ -507,7 +507,7 @@ export default function HumanApprovalWorkflow({
             <div style={{
               width: '28px',
               height: '28px',
-              borderRadius: '0px',
+              borderRadius: 0,
               background: '#f4f4f5',
               color: '#18181b',
               display: 'flex',
@@ -531,7 +531,7 @@ export default function HumanApprovalWorkflow({
               fontSize: '0.625rem',
               fontWeight: 800,
               padding: '3px 8px',
-              borderRadius: '0px',
+              borderRadius: 0,
               background: 'rgba(13, 33, 63, 0.08)',
               color: '#18181b',
               border: '1px solid rgba(13, 33, 63, 0.2)',
@@ -555,7 +555,7 @@ export default function HumanApprovalWorkflow({
             background: '#f9fafb',
             borderLeft: '3px solid #18181b',
             padding: '0.5rem 0.75rem',
-            borderRadius: '0 4px 4px 0',
+            borderRadius: 0,
             marginBottom: '1.25rem',
             lineHeight: 1.4
           }}
@@ -569,7 +569,7 @@ export default function HumanApprovalWorkflow({
             style={{
               marginBottom: '1.25rem',
               padding: '0.6rem 0.75rem',
-              borderRadius: '0px',
+              borderRadius: 0,
               background: '#f9fafb',
               border: '1px solid #e4e4e7',
               display: 'flex',
@@ -590,7 +590,7 @@ export default function HumanApprovalWorkflow({
                 fontSize: '0.625rem',
                 fontWeight: 800,
                 padding: '2px 6px',
-                borderRadius: '0px',
+                borderRadius: 0,
                 background: '#f4f4f5',
                 color: '#71717a',
                 border: '1px solid #71717a'
@@ -614,7 +614,7 @@ export default function HumanApprovalWorkflow({
               background: '#18181b',
               color: '#ffffff',
               border: 'none',
-              borderRadius: '0px',
+              borderRadius: 0,
               fontWeight: 700,
               fontSize: '0.8125rem',
               cursor: isUpdating ? 'not-allowed' : 'pointer',
@@ -642,7 +642,7 @@ export default function HumanApprovalWorkflow({
               background: '#71717a',
               color: '#ffffff',
               border: 'none',
-              borderRadius: '0px',
+              borderRadius: 0,
               fontWeight: 700,
               fontSize: '0.8125rem',
               cursor: isUpdating ? 'not-allowed' : 'pointer',
@@ -670,7 +670,7 @@ export default function HumanApprovalWorkflow({
               background: '#ffffff',
               color: '#3f3f46',
               border: '1px solid #e4e4e7',
-              borderRadius: '0px',
+              borderRadius: 0,
               fontWeight: 700,
               fontSize: '0.8125rem',
               cursor: isUpdating ? 'not-allowed' : 'pointer',
@@ -737,7 +737,7 @@ export default function HumanApprovalWorkflow({
               transition={{ duration: 0.2 }}
               style={{
                 background: '#ffffff',
-                borderRadius: '0px',
+                borderRadius: 0,
                 boxShadow: 'none',
                 border: '1px solid #e4e4e7',
                 width: '100%',
@@ -749,7 +749,7 @@ export default function HumanApprovalWorkflow({
             >
               {/* Modal Header */}
               <div style={{
-                background: 'var(--topbar-bg, #0d213f)',
+                background: 'var(--topbar-bg, #18181b)',
                 color: '#ffffff',
                 padding: '1rem 1.25rem',
                 display: 'flex',
@@ -766,7 +766,7 @@ export default function HumanApprovalWorkflow({
                   type="button"
                   onClick={cancelConfirmation}
                   disabled={isUpdating}
-                  style={{ background: 'none', border: 'none', color: '#8a99a8', cursor: 'pointer', padding: '2px' }}
+                  style={{ background: 'none', border: 'none', color: '#71717a', cursor: 'pointer', padding: '2px' }}
                 >
                   <X size={18} />
                 </button>
@@ -779,7 +779,7 @@ export default function HumanApprovalWorkflow({
                 <div style={{
                   background: '#f9fafb',
                   border: '1px solid #e4e4e7',
-                  borderRadius: '0px',
+                  borderRadius: 0,
                   padding: '0.75rem 1rem',
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -813,7 +813,7 @@ export default function HumanApprovalWorkflow({
                 }}>
                   <div style={{
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '0px',
+                    borderRadius: 0,
                     background: '#f4f4f5',
                     border: '1px solid #e4e4e7'
                   }}>
@@ -827,7 +827,7 @@ export default function HumanApprovalWorkflow({
 
                   <div style={{
                     padding: '0.5rem 0.75rem',
-                    borderRadius: '0px',
+                    borderRadius: 0,
                     background: `${getActionColor(pendingAction)}15`,
                     border: `1px solid ${getActionColor(pendingAction)}40`
                   }}>
@@ -844,7 +844,7 @@ export default function HumanApprovalWorkflow({
                 {isOverride && (
                   <div style={{
                     padding: '0.75rem',
-                    borderRadius: '0px',
+                    borderRadius: 0,
                     background: 'rgba(239, 68, 68, 0.08)',
                     borderLeft: '4px solid #71717a',
                     display: 'flex',
@@ -892,7 +892,7 @@ export default function HumanApprovalWorkflow({
                         color: '#09090b',
                         background: '#ffffff',
                         border: validationError ? '1px solid #71717a' : '1px solid #e4e4e7',
-                        borderRadius: '0px',
+                        borderRadius: 0,
                         outline: 'none',
                         fontFamily: 'inherit',
                         resize: 'vertical'
@@ -929,7 +929,7 @@ export default function HumanApprovalWorkflow({
                         color: '#09090b',
                         background: '#ffffff',
                         border: '1px solid #e4e4e7',
-                        borderRadius: '0px',
+                        borderRadius: 0,
                         outline: 'none',
                         fontFamily: 'inherit',
                         resize: 'vertical'
@@ -973,7 +973,7 @@ export default function HumanApprovalWorkflow({
                     background: '#ffffff',
                     color: '#3f3f46',
                     border: '1px solid #e4e4e7',
-                    borderRadius: '0px',
+                    borderRadius: 0,
                     fontSize: '0.75rem',
                     fontWeight: 600,
                     cursor: isUpdating ? 'not-allowed' : 'pointer'
@@ -991,7 +991,7 @@ export default function HumanApprovalWorkflow({
                     background: getActionColor(pendingAction),
                     color: '#ffffff',
                     border: 'none',
-                    borderRadius: '0px',
+                    borderRadius: 0,
                     fontSize: '0.75rem',
                     fontWeight: 700,
                     cursor: isUpdating ? 'not-allowed' : 'pointer',

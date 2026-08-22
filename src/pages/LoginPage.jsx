@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Shield } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -12,21 +12,34 @@ export default function LoginPage() {
   const { login, verifyMfa, isLoading, error } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
-  
-  const from = location.state?.from?.pathname || '/engine';
+
+  const getRoleDefaultRoute = (role) => {
+    switch(role) {
+      case 'SUPER_ADMIN': return '/platform';
+      case 'ORG_ADMIN': return '/admin';
+      case 'UNDERWRITING_MANAGER': return '/dashboard';
+      case 'CREDIT_ANALYST': return '/engine';
+      case 'VIEWER': return '/reports';
+      default: return '/engine';
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
       if (mfaChallenge) {
         await verifyMfa(mfaChallenge, mfaCode);
-        navigate(from, { replace: true });
+        const user = useAuthStore.getState().user;
+        const targetRoute = location.state?.from?.pathname || getRoleDefaultRoute(user?.role);
+        navigate(targetRoute, { replace: true });
       } else {
         const result = await login(email, password);
         if (result.mfa_required) {
           setMfaChallenge(result.challenge_token);
         } else {
-          navigate(from, { replace: true });
+          const user = useAuthStore.getState().user;
+          const targetRoute = location.state?.from?.pathname || getRoleDefaultRoute(user?.role);
+          navigate(targetRoute, { replace: true });
         }
       }
     } catch (err) {
@@ -34,57 +47,193 @@ export default function LoginPage() {
     }
   };
 
+  const styles = {
+    wrapper: {
+      minHeight: '100vh',
+      backgroundColor: '#fafafa',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: '1rem',
+      fontFamily: 'var(--font-family)',
+    },
+    card: {
+      width: '100%',
+      maxWidth: '420px',
+      backgroundColor: '#ffffff',
+      border: '1px solid #e4e4e7',
+    },
+    header: {
+      padding: '2.5rem 2rem 2rem',
+      borderBottom: '1px solid #e4e4e7',
+      textAlign: 'center',
+    },
+    title: {
+      fontSize: '1.875rem',
+      fontWeight: 300,
+      letterSpacing: '-0.025em',
+      color: '#18181b',
+      margin: 0,
+    },
+    subtitle: {
+      fontFamily: 'var(--font-mono)',
+      fontSize: '10px',
+      textTransform: 'uppercase',
+      letterSpacing: '0.1em',
+      color: '#71717a',
+      marginTop: '0.5rem',
+    },
+    body: {
+      padding: '2rem',
+    },
+    errorBox: {
+      marginBottom: '1.5rem',
+      padding: '1rem',
+      border: '1px solid #fecaca',
+      backgroundColor: '#fef2f2',
+      color: '#991b1b',
+      fontSize: '13px',
+    },
+    fieldGroup: {
+      marginBottom: '1.25rem',
+    },
+    label: {
+      display: 'block',
+      fontFamily: 'var(--font-mono)',
+      fontSize: '10px',
+      textTransform: 'uppercase',
+      letterSpacing: '0.1em',
+      color: '#71717a',
+      marginBottom: '0.5rem',
+    },
+    input: {
+      width: '100%',
+      padding: '0.75rem',
+      border: '1px solid #e4e4e7',
+      borderRadius: 0,
+      fontSize: '14px',
+      outline: 'none',
+      transition: 'border-color 0.15s',
+      backgroundColor: '#fff',
+      color: '#18181b',
+      boxSizing: 'border-box',
+    },
+    mfaInput: {
+      width: '100%',
+      padding: '0.75rem',
+      border: '1px solid #e4e4e7',
+      borderRadius: 0,
+      fontSize: '1.25rem',
+      fontFamily: 'var(--font-mono)',
+      letterSpacing: '0.5em',
+      textAlign: 'center',
+      outline: 'none',
+      transition: 'border-color 0.15s',
+      backgroundColor: '#fff',
+      color: '#18181b',
+      boxSizing: 'border-box',
+    },
+    button: {
+      width: '100%',
+      padding: '0.75rem',
+      backgroundColor: '#18181b',
+      color: '#ffffff',
+      border: 'none',
+      borderRadius: 0,
+      fontSize: '14px',
+      fontWeight: 500,
+      cursor: 'pointer',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: '0.5rem',
+      marginTop: '1.5rem',
+      transition: 'background-color 0.15s',
+    },
+    buttonDisabled: {
+      opacity: 0.5,
+      cursor: 'not-allowed',
+    },
+    footer: {
+      padding: '1.25rem 2rem',
+      borderTop: '1px solid #e4e4e7',
+      textAlign: 'center',
+    },
+    footerText: {
+      fontFamily: 'var(--font-mono)',
+      fontSize: '10px',
+      textTransform: 'uppercase',
+      letterSpacing: '0.1em',
+      color: '#a1a1aa',
+      margin: 0,
+    },
+    icon: {
+      display: 'flex',
+      justifyContent: 'center',
+      marginBottom: '1rem',
+    },
+  };
+
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col justify-center items-center p-4">
-      <div className="w-full max-w-md bg-white border border-zinc-200 rounded-none">
+    <div style={styles.wrapper}>
+      <div style={styles.card}>
         
-        <div className="p-8 border-b border-zinc-200 text-center">
-          <h1 className="text-3xl font-light tracking-tight text-zinc-900">CRESEM</h1>
-          <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500 mt-2">Institutional Access</p>
+        <div style={styles.header}>
+          <div style={styles.icon}>
+            <Shield size={24} color="#71717a" strokeWidth={1.5} />
+          </div>
+          <h1 style={styles.title}>CRESEM</h1>
+          <p style={styles.subtitle}>Institutional Access</p>
         </div>
         
-        <div className="p-8">
+        <div style={styles.body}>
           {error && (
-            <div className="mb-6 p-4 border border-red-200 bg-red-50 text-red-900 text-sm">
-              {error}
-            </div>
+            <div style={styles.errorBox}>{error}</div>
           )}
           
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin}>
             {!mfaChallenge ? (
               <>
-                <div className="space-y-2">
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-zinc-500">Email Address</label>
+                <div style={styles.fieldGroup}>
+                  <label style={styles.label}>Email Address</label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full p-3 border border-zinc-200 rounded-none focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-colors"
+                    style={styles.input}
+                    onFocus={(e) => e.target.style.borderColor = '#18181b'}
+                    onBlur={(e) => e.target.style.borderColor = '#e4e4e7'}
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-zinc-500">Password</label>
+                <div style={styles.fieldGroup}>
+                  <label style={styles.label}>Password</label>
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full p-3 border border-zinc-200 rounded-none focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-colors"
+                    style={styles.input}
+                    onFocus={(e) => e.target.style.borderColor = '#18181b'}
+                    onBlur={(e) => e.target.style.borderColor = '#e4e4e7'}
                   />
                 </div>
               </>
             ) : (
-              <div className="space-y-2">
-                <label className="block font-mono text-[10px] uppercase tracking-widest text-zinc-500">MFA Code</label>
+              <div style={styles.fieldGroup}>
+                <label style={styles.label}>MFA Verification Code</label>
                 <input
                   type="text"
                   value={mfaCode}
                   onChange={(e) => setMfaCode(e.target.value)}
                   required
                   placeholder="000000"
-                  className="w-full p-3 border border-zinc-200 rounded-none focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-colors text-center tracking-[0.5em] font-mono text-lg"
+                  maxLength={6}
+                  style={styles.mfaInput}
+                  onFocus={(e) => e.target.style.borderColor = '#18181b'}
+                  onBlur={(e) => e.target.style.borderColor = '#e4e4e7'}
                 />
               </div>
             )}
@@ -92,11 +241,24 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-zinc-900 text-white p-3 rounded-none font-medium hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-900 transition-colors disabled:opacity-50 flex justify-center items-center"
+              style={{
+                ...styles.button,
+                ...(isLoading ? styles.buttonDisabled : {}),
+              }}
+              onMouseEnter={(e) => { if (!isLoading) e.target.style.backgroundColor = '#27272a'; }}
+              onMouseLeave={(e) => { if (!isLoading) e.target.style.backgroundColor = '#18181b'; }}
             >
-              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (mfaChallenge ? 'Verify' : 'Sign In')}
+              {isLoading ? (
+                <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+              ) : (
+                mfaChallenge ? 'Verify' : 'Sign In'
+              )}
             </button>
           </form>
+        </div>
+
+        <div style={styles.footer}>
+          <p style={styles.footerText}>CRESEM &middot; Asenra &middot; Secure Access</p>
         </div>
       </div>
     </div>

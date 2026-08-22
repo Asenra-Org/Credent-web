@@ -13,47 +13,75 @@ export default function Navbar() {
     navigate('/login');
   };
 
-  const showDashboard = hasAnyRole(['UNDERWRITING_MANAGER', 'ORG_ADMIN', 'SUPER_ADMIN']);
-  const showAdmin = hasAnyRole(['ORG_ADMIN', 'SUPER_ADMIN']);
+  const getRoleLinks = (role) => {
+    switch (role) {
+      case 'SUPER_ADMIN':
+        return [{ path: '/platform', label: 'Platform Console' }];
+      case 'ORG_ADMIN':
+        return [{ path: '/admin', label: 'User Management' }];
+      case 'UNDERWRITING_MANAGER':
+        return [
+          { path: '/dashboard', label: 'Pending Approvals' },
+          { path: '/portfolio', label: 'Portfolio Overview' }
+        ];
+      case 'CREDIT_ANALYST':
+        return [
+          { path: '/engine', label: 'New Case (Engine)' },
+          { path: '/my-cases', label: 'My Cases' }
+        ];
+      case 'VIEWER':
+        return [{ path: '/reports', label: 'Reports Archive' }];
+      default:
+        return [];
+    }
+  };
+
+  const navLinks = getRoleLinks(user?.role);
 
   return (
     <nav style={{
-      background: '#2c3540',
+      background: '#18181b', // Zinc 900
       color: '#ffffff',
       height: '52px',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      borderBottom: '1px solid #3f4a57',
+      borderBottom: '1px solid #27272a', // Zinc 800
       padding: '0 1.25rem',
       fontSize: '13px'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700 }}>
-          <Activity size={18} color="#10b981" />
+          <Activity size={18} color="#ffffff" />
           <span style={{ fontSize: '15px' }}>Credent</span>
         </div>
 
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <Link to="/engine" style={{ color: location.pathname === '/engine' ? '#ffffff' : '#8a99a8', textDecoration: 'none', fontWeight: location.pathname === '/engine' ? 600 : 400 }}>Engine</Link>
-          {showDashboard && (
-            <Link to="/dashboard" style={{ color: location.pathname === '/dashboard' ? '#ffffff' : '#8a99a8', textDecoration: 'none', fontWeight: location.pathname === '/dashboard' ? 600 : 400 }}>Dashboard</Link>
-          )}
-          {showAdmin && (
-            <Link to="/admin" style={{ color: location.pathname === '/admin' ? '#ffffff' : '#8a99a8', textDecoration: 'none', fontWeight: location.pathname === '/admin' ? 600 : 400 }}>Admin</Link>
-          )}
+          {navLinks.map((link) => (
+            <Link 
+              key={link.path} 
+              to={link.path} 
+              style={{ 
+                color: location.pathname === link.path ? '#ffffff' : '#a1a1aa', 
+                textDecoration: 'none', 
+                fontWeight: location.pathname === link.path ? 600 : 400 
+              }}
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
         {user && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '11px', fontFamily: 'monospace' }}>
-            <span style={{ color: '#8a99a8' }}>{user.email}</span>
+            <span style={{ color: '#a1a1aa' }}>{user.email}</span>
             <span style={{ 
-              background: '#0d213f', 
+              background: '#27272a', // Zinc 800
               padding: '2px 6px', 
-              borderRadius: '2px',
-              border: '1px solid #1a365d'
+              borderRadius: '0px',
+              border: '1px solid #3f3f46' // Zinc 700
             }}>
               {user.role.replace('_', ' ')}
             </span>
@@ -64,7 +92,7 @@ export default function Navbar() {
           style={{ 
             background: 'transparent',
             border: 'none',
-            color: '#8a99a8',
+            color: '#a1a1aa',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',

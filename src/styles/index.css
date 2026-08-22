@@ -46,7 +46,7 @@ body {
   color: var(--text-dark);
   font-size: 13px;
   line-height: 1.5;
-  overflow: hidden;
+  /* Removed overflow: hidden to allow scrolling */
 }
 
 /* Scrollbars */
@@ -58,8 +58,7 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: #d4d4d8; /* Zinc 300 */
 }
 
 /* Animations */
@@ -71,43 +70,29 @@ body {
   animation: spin 1s linear infinite;
 }
 
-/* Modern Banking Overrides */
+/* Premium Institutional B2B Settings (No gradients, no rounded borders) */
 :root {
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --border-light: #e5e7eb;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --border-light: #e4e4e7; /* Zinc 200 */
 }
 
 body {
-  background-color: #f9fafb;
+  background-color: #fafafa; /* Zinc 50 */
 }
 
-/* Upgrade all divs that look like cards to have modern elevation */
-.card-modern {
-  background: #ffffff;
-  border: 1px solid var(--border-light) !important;
-  border-radius: var(--radius-md) !important;
-  box-shadow: var(--shadow-sm) !important;
-  transition: box-shadow 0.2s ease-in-out;
-}
-
-.card-modern:hover {
-  box-shadow: var(--shadow-md) !important;
-}
-
-/* Modernize inputs and buttons */
+/* Base input and button enforcement for sharp edges */
 input, select, textarea {
-  border-radius: var(--radius-sm) !important;
-  border: 1px solid var(--border-light) !important;
+  border-radius: 0 !important;
+  border: 1px solid var(--border-light);
 }
 
 button {
-  border-radius: var(--radius-sm) !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.01em;
+  border-radius: 0 !important;
+  font-weight: 500 !important;
 }
 
 

@@ -20,14 +20,46 @@ export default function ProtectedRoute({ requiredRoles }) {
       setIsChecking(false);
     };
     checkAuth();
-  }, []);
+  }, [isAuthenticated, refresh]);
+
+  const styles = {
+    container: {
+      minHeight: '100vh',
+      backgroundColor: '#ffffff',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    wrapper: {
+      textAlign: 'center',
+    },
+    deniedBox: {
+      textAlign: 'center',
+      border: '1px solid #e4e4e7',
+      padding: '3rem',
+    },
+    title: {
+      fontSize: '1.25rem',
+      fontWeight: 300,
+      letterSpacing: '-0.025em',
+      color: '#18181b',
+      marginBottom: '0.5rem',
+    },
+    subtitle: {
+      fontFamily: 'var(--font-mono)',
+      fontSize: '10px',
+      textTransform: 'uppercase',
+      letterSpacing: '0.1em',
+      color: '#71717a',
+    }
+  };
 
   if (isChecking) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-6 h-6 animate-spin text-zinc-400 mx-auto mb-3" />
-          <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Verifying Session</p>
+      <div style={styles.container}>
+        <div style={styles.wrapper}>
+          <Loader2 size={24} color="#a1a1aa" style={{ margin: '0 auto 0.75rem auto', animation: 'spin 1s linear infinite' }} />
+          <p style={styles.subtitle}>Verifying Session</p>
         </div>
       </div>
     );
@@ -39,11 +71,11 @@ export default function ProtectedRoute({ requiredRoles }) {
 
   if (requiredRoles && !hasAnyRole(requiredRoles)) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center border border-zinc-200 p-12">
-          <Shield className="w-8 h-8 text-zinc-300 mx-auto mb-4" />
-          <h1 className="text-xl font-light tracking-tight text-zinc-900 mb-2">Access Denied</h1>
-          <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Insufficient permissions for this resource</p>
+      <div style={styles.container}>
+        <div style={styles.deniedBox}>
+          <Shield size={32} color="#d4d4d8" style={{ margin: '0 auto 1rem auto' }} strokeWidth={1.5} />
+          <h1 style={styles.title}>Access Denied</h1>
+          <p style={styles.subtitle}>Insufficient permissions for this resource</p>
         </div>
       </div>
     );
