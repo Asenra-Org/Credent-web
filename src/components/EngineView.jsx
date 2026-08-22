@@ -6,7 +6,8 @@
  * ============================================================
  */
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import api from '../lib/api';
 import {
   Upload, Loader2, Download, Trash2, CheckCircle2,
   AlertTriangle, FileText, ArrowRight, Server, Shield,
@@ -14,13 +15,7 @@ import {
   Menu, Bell, ChevronRight, Settings, FileSpreadsheet, Lock,
   XCircle, HelpCircle, Folder, RefreshCw, Play, Eye, Plus
 } from 'lucide-react';
-
 import { downloadPDF } from '../utils/generatePdf';
-import ManagerDashboard from './ManagerDashboard';
-
-const _envUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
-const API_URL = _envUrl.endsWith('/api/v1') ? _envUrl : `${_envUrl.replace(/\/$/, '')}/api/v1`;
-const api = axios.create({ baseURL: API_URL, timeout: 120000 });
 
 const formatToCr = (val) => {
   if (val === null || val === undefined || isNaN(val)) return 'N/A';
@@ -84,8 +79,7 @@ export default function EngineView() {
   
   const [sessionTime, setSessionTime] = useState('');
   
-  // Navigation View: 'terminal' or 'history'
-  const [currentView, setCurrentView] = useState('terminal');
+  const navigate = useNavigate();
   
   const logEndRef = useRef(null);
   const processingLogEndRef = useRef(null);
@@ -814,10 +808,10 @@ export default function EngineView() {
                 alignItems: 'center', 
                 justifyContent: 'space-between',
                 padding: '0.6rem 1.25rem', 
-                background: currentView === 'terminal' ? '#f4f6f8' : 'transparent', 
-                color: currentView === 'terminal' ? '#0d213f' : '#506070', 
-                fontWeight: currentView === 'terminal' ? 600 : 400,
-                borderLeft: currentView === 'terminal' ? '3px solid #0d213f' : '3px solid transparent',
+                background: '#f4f6f8', 
+                color: '#0d213f', 
+                fontWeight: 600,
+                borderLeft: '3px solid #0d213f',
                 cursor: 'pointer'
               }}
             >
@@ -831,16 +825,16 @@ export default function EngineView() {
 
             {/* Sidebar Item 3: Manager Dashboard */}
             <div 
-              onClick={() => setCurrentView('manager')}
+              onClick={() => navigate('/dashboard')}
               style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'space-between',
                 padding: '0.6rem 1.25rem', 
-                background: currentView === 'manager' ? '#f4f6f8' : 'transparent', 
-                color: currentView === 'manager' ? '#0d213f' : '#506070', 
-                fontWeight: currentView === 'manager' ? 600 : 400,
-                borderLeft: currentView === 'manager' ? '3px solid #0d213f' : '3px solid transparent',
+                background: 'transparent', 
+                color: '#506070', 
+                fontWeight: 400,
+                borderLeft: '3px solid transparent',
                 cursor: 'pointer'
               }}
             >
@@ -864,9 +858,8 @@ export default function EngineView() {
         }}>
           
           {/* VIEW A: APPRAISAL TERMINAL */}
-          {currentView === 'terminal' && (
-            <>
-              {/* TOP THREE METRIC CARDS */}
+          <>
+            {/* TOP THREE METRIC CARDS */}
               <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: 'repeat(3, 1fr)', 
@@ -1573,12 +1566,6 @@ export default function EngineView() {
                 </div>
               </div>
             </>
-          )}
-
-          {/* VIEW C: MANAGER DASHBOARD */}
-          {currentView === 'manager' && (
-            <ManagerDashboard onExit={() => setCurrentView('terminal')} />
-          )}
 
         </main>
       </div>

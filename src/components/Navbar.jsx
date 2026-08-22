@@ -1,98 +1,80 @@
-/**
- * ============================================================
- *  CREDENT — AI Credit Appraisal Engine
- *  © 2025 Asenra. All Rights Reserved.
- *  https://asenra.in
- *
- *  This source code is the exclusive intellectual property of
- *  Asenra. Unauthorized reproduction, distribution, or use
- *  of this code, in whole or in part, is strictly prohibited.
- * ============================================================
- */
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, Zap, ShieldCheck } from 'lucide-react';
-import { ThemeToggle } from './ThemeToggle';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useAuthStore } from '../stores/authStore';
+import { Activity, LogOut, ShieldCheck } from 'lucide-react';
 
-export default function Navbar({ currentView, setCurrentView, theme, toggleTheme }) {
-  const views = [
-    { id: 'home', label: 'Home' },
-    { id: 'features', label: 'Features' },
-    { id: 'how-it-works', label: 'How it Works' },
-    { id: 'security', label: 'Security' }
-  ];
+export default function Navbar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, logout, hasAnyRole } = useAuthStore();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  const showDashboard = hasAnyRole(['UNDERWRITING_MANAGER', 'ORG_ADMIN', 'SUPER_ADMIN']);
+  const showAdmin = hasAnyRole(['ORG_ADMIN', 'SUPER_ADMIN']);
 
   return (
-    <nav className="navbar">
-      <motion.div 
-        className="nav-brand" 
-        onClick={() => setCurrentView('home')}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-      >
-        <div style={{ 
-          background: 'var(--teal-glow)', 
-          padding: '6px', 
-          borderRadius: '10px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 0 15px var(--teal-glow)'
-        }}>
-          <Activity color="var(--teal)" size={18} />
+    <nav style={{
+      background: '#2c3540',
+      color: '#ffffff',
+      height: '52px',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      borderBottom: '1px solid #3f4a57',
+      padding: '0 1.25rem',
+      fontSize: '13px'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700 }}>
+          <Activity size={18} color="#10b981" />
+          <span style={{ fontSize: '15px' }}>Credent</span>
         </div>
-        <span style={{ fontWeight: 800 }}>Credent</span>
-      </motion.div>
 
-      <div className="nav-links">
-        {views.map((v) => (
-          <motion.span
-            key={v.id}
-            className={`nav-link ${currentView === v.id ? 'active' : ''}`}
-            onClick={() => setCurrentView(v.id)}
-            style={{ position: 'relative' }}
-            whileHover={{ color: 'var(--text-primary)' }}
-          >
-            {currentView === v.id && (
-              <motion.div
-                layoutId="active-nav"
-                className="nav-link-bg"
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'var(--navy)',
-                  borderRadius: '9999px',
-                  zIndex: -1,
-                  boxShadow: '0 4px 12px rgba(9, 9, 11, 0.2)'
-                }}
-                transition={{ type: 'spring', duration: 0.5, bounce: 0.2 }}
-              />
-            )}
-            <span style={{ position: 'relative', zIndex: 1 }}>{v.label}</span>
-          </motion.span>
-        ))}
-
-        <motion.span
-          className="nav-link"
-          onClick={() => setCurrentView('manager')}
-          style={{ cursor: 'pointer', fontSize: '0.8125rem', fontWeight: '700', color: 'var(--teal)', marginRight: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}
-          whileHover={{ opacity: 0.8 }}
-        >
-          <ShieldCheck size={14} /> Institutional Portal
-        </motion.span>
-
-        <ThemeToggle isDark={theme === 'dark'} onToggle={toggleTheme} />
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <Link to="/engine" style={{ color: location.pathname === '/engine' ? '#ffffff' : '#8a99a8', textDecoration: 'none', fontWeight: location.pathname === '/engine' ? 600 : 400 }}>Engine</Link>
+          {showDashboard && (
+            <Link to="/dashboard" style={{ color: location.pathname === '/dashboard' ? '#ffffff' : '#8a99a8', textDecoration: 'none', fontWeight: location.pathname === '/dashboard' ? 600 : 400 }}>Dashboard</Link>
+          )}
+          {showAdmin && (
+            <Link to="/admin" style={{ color: location.pathname === '/admin' ? '#ffffff' : '#8a99a8', textDecoration: 'none', fontWeight: location.pathname === '/admin' ? 600 : 400 }}>Admin</Link>
+          )}
+        </div>
       </div>
 
-      <motion.button 
-        className="btn-primary" 
-        onClick={() => setCurrentView('engine')}
-        style={{ padding: '0.625rem 1.5rem', fontSize: '0.8125rem' }}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-      >
-        <Zap size={14} /> Launch Engine
-      </motion.button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        {user && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '11px', fontFamily: 'monospace' }}>
+            <span style={{ color: '#8a99a8' }}>{user.email}</span>
+            <span style={{ 
+              background: '#0d213f', 
+              padding: '2px 6px', 
+              borderRadius: '2px',
+              border: '1px solid #1a365d'
+            }}>
+              {user.role.replace('_', ' ')}
+            </span>
+          </div>
+        )}
+        <button 
+          onClick={handleLogout}
+          style={{ 
+            background: 'transparent',
+            border: 'none',
+            color: '#8a99a8',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}
+          title="Logout"
+        >
+          <LogOut size={16} />
+        </button>
+      </div>
     </nav>
   );
 }

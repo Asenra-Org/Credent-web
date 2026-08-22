@@ -34,11 +34,11 @@ import {
 
 import { downloadPDF } from '../utils/generatePdf';
 import HumanApprovalWorkflow, { getAiRecommendation } from './HumanApprovalWorkflow';
+import api from '../lib/api';
+import { useNavigate } from 'react-router-dom';
 
-const _envUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
-const API_BASE_URL = _envUrl.endsWith('/api/v1') ? _envUrl : `${_envUrl.replace(/\/$/, '')}/api/v1`;
-
-export default function ManagerDashboard({ theme, onExit }) {
+export default function ManagerDashboard({ theme }) {
+  const navigate = useNavigate();
   const [appraisals, setAppraisals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,8 +54,8 @@ export default function ManagerDashboard({ theme, onExit }) {
 
   const fetchAppraisals = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/history/recent?limit=50`);
-      const result = await response.json();
+      const response = await api.get('/history/recent', { params: { limit: 50 } });
+      const result = response.data;
       if (result.status === 'success') {
         setAppraisals(result.data);
       }
@@ -135,25 +135,17 @@ export default function ManagerDashboard({ theme, onExit }) {
     setUpdating(true);
 
     try {
-      const resp = await fetch(`${API_BASE_URL}/reports/update-status/${appId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          decision: newDecision,
-          rationale: finalRationale,
-          override_reason: isOverride ? overrideReason : undefined,
-          is_override: isOverride,
-          officer_decision: newDecision,
-          ai_recommendation: aiRec,
-          timestamp: new Date().toISOString()
-        })
+      const resp = await api.patch(`/reports/update-status/${appId}`, {
+        decision: newDecision,
+        rationale: finalRationale,
+        override_reason: isOverride ? overrideReason : undefined,
+        is_override: isOverride,
+        officer_decision: newDecision,
+        ai_recommendation: aiRec,
+        timestamp: new Date().toISOString()
       });
 
-      if (!resp.ok) {
-        throw new Error(`HTTP Error ${resp.status}: ${resp.statusText}`);
-      }
-
-      const result = await resp.json();
+      const result = resp.data;
 
       if (result.status !== 'success') {
         throw new Error(result.message || 'Server rejected status update');
@@ -227,7 +219,7 @@ export default function ManagerDashboard({ theme, onExit }) {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={onExit}
+            onClick={() => navigate('/engine')}
             style={{ background: 'var(--bg-primary)', border: '1px solid #e4e4e7', color: '#09090b', padding: '0.5rem 1rem', borderRadius: '0px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
             <ArrowLeft size={16} /> Exit Terminal
