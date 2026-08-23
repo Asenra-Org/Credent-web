@@ -181,7 +181,7 @@ export default function LoginPage() {
         
         <div style={styles.header}>
           <div style={{ ...styles.icon, display: 'flex', justifyContent: 'center', marginBottom: '1rem', border: 'none', background: 'transparent' }}>
-            <img src="/Credent_LOGO.png" alt="CRESEM Logo" style={{ height: '48px', objectFit: 'contain' }} />
+            <img src="/logo.jpg" alt="CRESEM Logo" style={{ height: '48px', objectFit: 'contain' }} />
           </div>
           <h1 style={styles.title}>CRESEM</h1>
           <p style={styles.subtitle}>Institutional Access</p>
