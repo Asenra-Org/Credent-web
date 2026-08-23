@@ -117,6 +117,19 @@ export default function EngineView() {
   const [activeTab, setActiveTab] = useState('EXECUTIVE SUMMARY');
   const [logs, setLogs] = useState([]);
   const [progress, setProgress] = useState(0);
+  const stopProcessingRef = useRef(false);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isProcessingQueue || appStatus === 'processing') {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isProcessingQueue, appStatus]);
+
 
   // Ingestion Task Queue & Folder Staging State
   const [queueItems, setQueueItems] = useState([]);
@@ -537,7 +550,15 @@ export default function EngineView() {
     }
   };
 
+  
+  const stopQueue = () => {
+    stopProcessingRef.current = true;
+    setIsProcessingQueue(false);
+    setAppStatus('idle');
+  };
+
   const runAllQueueTasks = async (targetItems = null) => {
+    stopProcessingRef.current = false;
     const itemsToProcess = targetItems || queueItems.filter(item => item.status === 'staged' || item.status === 'queued' || item.status === 'failed');
     if (itemsToProcess.length === 0) return;
 
@@ -546,6 +567,10 @@ export default function EngineView() {
     setErrorMessage('');
 
     for (let i = 0; i < itemsToProcess.length; i++) {
+      if (stopProcessingRef.current) {
+        setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] SYSTEM: Queue processing stopped by user.`]);
+        break;
+      }
       const item = itemsToProcess[i];
       setProgress(Math.round(((i) / itemsToProcess.length) * 100));
       await processSingleQueueTask(item);
@@ -1200,7 +1225,29 @@ export default function EngineView() {
                                 </button>
                               )}
 
-                              {/* Run Appraisal Queue */}
+                              
+                              {isProcessingQueue && (
+                                <button
+                                  type="button"
+                                  onClick={stopQueue}
+                                  style={{
+                                    background: '#ef4444',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    padding: '0.4rem 0.85rem',
+                                    fontSize: '11px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    borderRadius: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '5px'
+                                  }}>
+                                  <span>STOP</span>
+                                </button>
+                              )}
+
+                                {/* Run Appraisal Queue */}
                               <button
                                 type="button"
                                 onClick={() => runAllQueueTasks()}
