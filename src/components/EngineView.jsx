@@ -13,7 +13,7 @@ import {
   AlertTriangle, FileText, ArrowRight, Server, Shield,
   Terminal, Database, History, User, Clock, LayoutDashboard,
   Menu, Bell, ChevronRight, Settings, FileSpreadsheet, Lock,
-  XCircle, HelpCircle, Folder, RefreshCw, Play, Eye, Plus
+  XCircle, HelpCircle, Folder, RefreshCw, Play, Eye, Plus, AlertOctagon
 } from 'lucide-react';
 import { downloadPDF } from '../utils/generatePdf';
 
@@ -28,7 +28,7 @@ const formatToCr = (val) => {
  * always falls back to a safe neutral style rather than throwing
  * or rendering unstyled/undefined output.
  */
-const getDecisionStyle = (decision) => {
+export const getDecisionStyle = (decision) => {
   // Defensive: coerce to string first — protects against non-string
   // values (null, undefined, numbers, objects) reaching .toUpperCase()
 const d = String(decision ?? "")
@@ -36,24 +36,73 @@ const d = String(decision ?? "")
   .toUpperCase();
 
 if (d === "APPROVED" || d === "APPROVE") {
-  return { label: d, bg: "#f4f4f5", border: "#18181b", color: "#18181b", Icon: CheckCircle2 };
+  return { label: d, bg: "#f4f4f5", border: "#18181b", color: "#18181b", Icon: CheckCircle2, isDecision: true };
 }
 
 if (d === "REJECTED" || d === "REJECT") {
-  return { label: d, bg: "#f4f4f5", border: "#ef4444", color: "#ef4444", Icon: XCircle };
+  return { label: d, bg: "#f4f4f5", border: "#ef4444", color: "#ef4444", Icon: XCircle, isDecision: true };
 }
 
-if (d === "MANUAL REVIEW" || d === "MANUAL_REVIEW") {
-  return { label: d, bg: "#fffbeb", border: "#18181b", color: "#18181b", Icon: AlertTriangle };
+if (d === "MANUAL REVIEW" || d === "MANUAL_REVIEW" || d === "MANUAL_REVIEW_REQUIRED") {
+  return { label: "MANUAL REVIEW REQUIRED", bg: "#fffbeb", border: "#18181b", color: "#18181b", Icon: AlertTriangle, isDecision: true };
+}
+
+// A failed analysis is not a credit outcome. It must never borrow the visual
+// language of a decision, and must never fall through to "UNKNOWN".
+if (d === "ANALYSIS_INCOMPLETE" || d === "FAILED") {
+  return { label: "ANALYSIS INCOMPLETE", bg: "#fef2f2", border: "#b91c1c", color: "#b91c1c", Icon: AlertOctagon, isDecision: false, incomplete: true };
+}
+
+if (d === "BLOCKED") {
+  return { label: "BLOCKED", bg: "#fef2f2", border: "#b91c1c", color: "#b91c1c", Icon: Lock, isDecision: false, incomplete: true };
+}
+
+if (d === "DEGRADED") {
+  return { label: "DEGRADED", bg: "#fffbeb", border: "#b45309", color: "#b45309", Icon: AlertTriangle, isDecision: false };
+}
+
+if (d === "COMPLETED") {
+  return { label: "COMPLETED", bg: "#f4f4f5", border: "#18181b", color: "#18181b", Icon: CheckCircle2, isDecision: false };
 }
 
 return {
-  label: d || "UNKNOWN",
+  label: d || "AWAITING RESULT",
   bg: "#fafafa",
   border: "#71717a",
   color: "#71717a",
   Icon: HelpCircle,
+  isDecision: false,
 };}
+
+/**
+ * Human-readable status copy for an appraisal that produced no credit decision.
+ * Returns null when the appraisal completed normally.
+ */
+export const getIncompleteNotice = (report) => {
+  const status = String(report?.analysis_status ?? "").trim().toUpperCase();
+  const decision = String(report?.decision ?? "").trim().toUpperCase();
+  const blocked = status === "BLOCKED";
+  const incomplete =
+    report?.decision_allowed === false ||
+    status === "FAILED" ||
+    blocked ||
+    decision === "ANALYSIS_INCOMPLETE";
+
+  if (!incomplete) return null;
+
+  return {
+    title: blocked ? "Analysis Blocked" : "Analysis Incomplete",
+    message: blocked
+      ? "This case was blocked on security grounds and cannot receive a credit recommendation."
+      : "This case cannot receive a credit recommendation because required analysis could not be completed.",
+    status: status || "FAILED",
+    failedComponents: report?.missing_required ?? [],
+    degradedComponents: report?.degraded_components ?? [],
+    nextAction: blocked
+      ? "Review the uploaded document with your security team before resubmitting."
+      : "Re-run the appraisal once the failed components are available. No underwriting decision has been made.",
+  };
+};
 
 export default function EngineView() {
   const [appStatus, setAppStatus] = useState('idle');
@@ -703,6 +752,7 @@ export default function EngineView() {
   // Only computed when a camReport exists; both render sites fall back to the
   // neutral/idle look when it doesn't.
   const decisionStyle = camReport ? getDecisionStyle(camReport.decision) : null;
+  const incompleteNotice = camReport ? getIncompleteNotice(camReport) : null;
 
   return (
     <div style={{ 
@@ -961,6 +1011,45 @@ export default function EngineView() {
                       : 'Submit a financial audit PDF file to run the credit valuation pipeline'}
                   </div>
                 </div>
+
+                {/* Analysis Incomplete / Blocked notice. Rendered above the results so
+                    an underwriter cannot mistake a failed run for a credit outcome. */}
+                {incompleteNotice && (
+                  <div
+                    data-testid="analysis-incomplete-banner"
+                    role="alert"
+                    style={{
+                      background: "#fef2f2",
+                      borderLeft: "4px solid #b91c1c",
+                      borderBottom: "1px solid var(--border-light)",
+                      padding: "1rem 1.25rem",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#b91c1c", fontWeight: 600, fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.02em" }}>
+                      <AlertOctagon size={16} />
+                      <span>{incompleteNotice.title}</span>
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#3f3f46", marginTop: "6px", lineHeight: 1.5 }}>
+                      {incompleteNotice.message}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#52525b", marginTop: "8px", fontFamily: "var(--font-mono)" }}>
+                      STATUS: {incompleteNotice.status}
+                    </div>
+                    {incompleteNotice.failedComponents.length > 0 && (
+                      <div style={{ fontSize: "11px", color: "#52525b", marginTop: "4px", fontFamily: "var(--font-mono)" }}>
+                        REQUIRED ANALYSIS UNAVAILABLE: {incompleteNotice.failedComponents.join(", ")}
+                      </div>
+                    )}
+                    {incompleteNotice.degradedComponents.length > 0 && (
+                      <div style={{ fontSize: "11px", color: "#52525b", marginTop: "4px", fontFamily: "var(--font-mono)" }}>
+                        DEGRADED COMPONENTS: {incompleteNotice.degradedComponents.join(", ")}
+                      </div>
+                    )}
+                    <div style={{ fontSize: "11px", color: "#3f3f46", marginTop: "8px" }}>
+                      NEXT ACTION: {incompleteNotice.nextAction}
+                    </div>
+                  </div>
+                )}
 
                 {/* Content Body Area */}
                 <div style={{ padding: '1.25rem' }}>
