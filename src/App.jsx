@@ -6,6 +6,7 @@ import EngineView from './components/EngineView';
 import ManagerDashboard from './components/ManagerDashboard';
 import AdminPanel from './pages/AdminPanel';
 import SuperAdminPanel from './pages/SuperAdminPanel';
+import ProfileSettings from './pages/ProfileSettings';
 import { useAuthStore } from './stores/authStore';
 
 const RoleRedirect = () => {
@@ -29,6 +30,7 @@ export default function App() {
         
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<RoleRedirect />} />
+          <Route path="/settings" element={<ProfileSettings />} />
         </Route>
 
         <Route element={<ProtectedRoute requiredRoles={['SUPER_ADMIN']} />}>

@@ -87,6 +87,22 @@ export default function Navbar() {
             </span>
           </div>
         )}
+        <Link 
+          to="/settings"
+          style={{ 
+            background: 'transparent',
+            border: 'none',
+            color: '#a1a1aa',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            textDecoration: 'none'
+          }}
+          title="Settings"
+        >
+          <ShieldCheck size={16} />
+        </Link>
         <button 
           onClick={handleLogout}
           style={{ 
