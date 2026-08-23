@@ -1,4 +1,4 @@
-﻿{
+{
   "rewrites": [
     { "source": "/api/(.*)", "destination": "https://credent-api.onrender.com/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
