@@ -549,10 +549,11 @@ export default function EngineView() {
       const item = itemsToProcess[i];
       setProgress(Math.round(((i) / itemsToProcess.length) * 100));
       await processSingleQueueTask(item);
-        if (i < itemsToProcess.length - 1) {
-          setLogs(prev => [...prev, [] QUEUE: Pausing 15 seconds to respect LLM rate limits...]);
-          await new Promise(r => setTimeout(r, 15000));
-        }
+      if (i < itemsToProcess.length - 1) {
+        const ts = new Date().toLocaleTimeString();
+        setLogs(prev => [...prev, `[${ts}] QUEUE: Pausing 15s before next file to respect LLM rate limits...`]);
+        await new Promise(r => setTimeout(r, 15000));
+      }
       setProgress(Math.round(((i + 1) / itemsToProcess.length) * 100));
     }
 
