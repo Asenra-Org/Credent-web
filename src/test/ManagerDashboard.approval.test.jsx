@@ -7,7 +7,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import ManagerDashboard from '../components/ManagerDashboard';
+
+// [P1-6] ManagerDashboard renders inside a Router (useNavigate) and fetches
+// through the axios instance in ../lib/api, not window.fetch. The old
+// global.fetch stub never intercepted anything, so every test hit the network.
+vi.mock('../lib/api', () => ({
+  default: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), put: vi.fn(), delete: vi.fn() },
+}));
+import api from '../lib/api';
 
 const SAMPLE_APPRAISALS = [
   {
@@ -35,24 +44,16 @@ const SAMPLE_APPRAISALS = [
 ];
 
 beforeEach(() => {
-  global.fetch = vi.fn((url, options) => {
-    if (options?.method === 'PATCH') {
-      return Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ status: 'success', data: { updated: true } })
-      });
-    }
-    return Promise.resolve({
-      ok: true,
-      json: () => Promise.resolve({ status: 'success', data: SAMPLE_APPRAISALS })
-    });
-  });
+  vi.clearAllMocks();
+  api.get.mockResolvedValue({ data: { status: "success", data: SAMPLE_APPRAISALS } });
+  api.patch.mockResolvedValue({ data: { status: "success", data: { updated: true } } });
+  api.post.mockResolvedValue({ data: { status: "success", data: { updated: true } } });
 });
 
 describe('ManagerDashboard — Human Approval Workflow Integration', () => {
   it('opens the Decision Center drawer when clicking an application ledger row', async () => {
     const user = userEvent.setup();
-    render(<ManagerDashboard theme="dark" onExit={() => {}} />);
+    render(<ManagerDashboard theme="dark" onExit={() => {}} />, { wrapper: MemoryRouter });
 
     await waitFor(() => expect(screen.getByText('Bharat Dynamics Alloy Ltd')).toBeInTheDocument());
 
@@ -74,7 +75,7 @@ describe('ManagerDashboard — Human Approval Workflow Integration', () => {
 
   it('allows overriding AI recommendation in ManagerDashboard drawer with mandatory override reason', async () => {
     const user = userEvent.setup();
-    render(<ManagerDashboard theme="dark" onExit={() => {}} />);
+    render(<ManagerDashboard theme="dark" onExit={() => {}} />, { wrapper: MemoryRouter });
 
     await waitFor(() => expect(screen.getByText('Bharat Dynamics Alloy Ltd')).toBeInTheDocument());
     await user.click(screen.getByText('Bharat Dynamics Alloy Ltd'));
@@ -92,13 +93,12 @@ describe('ManagerDashboard — Human Approval Workflow Integration', () => {
     await user.type(reasonInput, 'Approved by Board committee based on government defense contracts.');
     await user.click(screen.getByRole('button', { name: /Confirm Decision/i }));
 
-    // Verify fetch PATCH call was made
+    // The override is submitted through api.patch(url, body), not window.fetch.
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(api.patch).toHaveBeenCalledWith(
         expect.stringContaining('/reports/update-status/APP-001'),
         expect.objectContaining({
-          method: 'PATCH',
-          body: expect.stringContaining('Approved by Board committee based on government defense contracts')
+          override_reason: expect.stringContaining('Approved by Board committee based on government defense contracts'),
         })
       );
     });
@@ -106,7 +106,7 @@ describe('ManagerDashboard — Human Approval Workflow Integration', () => {
 
   it('can close the Decision Center drawer cleanly', async () => {
     const user = userEvent.setup();
-    render(<ManagerDashboard theme="dark" onExit={() => {}} />);
+    render(<ManagerDashboard theme="dark" onExit={() => {}} />, { wrapper: MemoryRouter });
 
     await waitFor(() => expect(screen.getByText('Tata Steel Tubes Division')).toBeInTheDocument());
     await user.click(screen.getByText('Tata Steel Tubes Division'));

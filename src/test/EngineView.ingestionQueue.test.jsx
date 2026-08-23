@@ -10,7 +10,14 @@
 // =============================================================================
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import EngineView from '../components/EngineView';
+
+// [P1-6] EngineView calls useNavigate(), added when routing and auth were
+// introduced. Rendering it bare threw "useNavigate() may be used only in the
+// context of a <Router>" and failed every test in this file. The component is
+// correct; the harness had not kept up, so renders go through a router now.
+const renderEngineView = () => render(<EngineView />, { wrapper: MemoryRouter });
 
 // jsdom does not implement scrollIntoView
 window.HTMLElement.prototype.scrollIntoView = vi.fn();
@@ -35,7 +42,7 @@ beforeEach(() => {
 // ===========================================================================
 describe('EngineView — Dropzone controls', () => {
   it('renders the drag-and-drop headline and both picker buttons', () => {
-    render(<EngineView />);
+    renderEngineView();
 
     expect(
       screen.getByText(/Drag and drop financial PDFs or entire folders here/i)
@@ -50,7 +57,7 @@ describe('EngineView — Dropzone controls', () => {
 // ===========================================================================
 describe('EngineView — ASE-59: single-file routes to direct pipeline', () => {
   it('does NOT show the staging queue grid when exactly 1 file is picked', async () => {
-    render(<EngineView />);
+    renderEngineView();
 
     const singleFile = new File(['content'], 'Single_Audit.pdf', { type: 'application/pdf' });
     pickFiles(singleFile);
@@ -65,7 +72,7 @@ describe('EngineView — ASE-59: single-file routes to direct pipeline', () => {
   });
 
   it('does NOT render the RUN QUEUE APPRAISAL button when exactly 1 file is picked', async () => {
-    render(<EngineView />);
+    renderEngineView();
 
     const singleFile = new File(['content'], 'Single_Audit.pdf', { type: 'application/pdf' });
     pickFiles(singleFile);
@@ -84,7 +91,7 @@ describe('EngineView — ASE-59: single-file routes to direct pipeline', () => {
 // ===========================================================================
 describe('EngineView — ASE-59: multi-file routes to staging queue', () => {
   it('stages 2 uploaded files into the queue grid with STAGED status badges', async () => {
-    render(<EngineView />);
+    renderEngineView();
 
     const file1 = new File(['c1'], 'Q1_Financials.pdf', { type: 'application/pdf' });
     const file2 = new File(['c2'], 'Q2_Financials.pdf', { type: 'application/pdf' });
@@ -100,7 +107,7 @@ describe('EngineView — ASE-59: multi-file routes to staging queue', () => {
   });
 
   it('shows the RUN QUEUE APPRAISAL button after 2+ files are staged', async () => {
-    render(<EngineView />);
+    renderEngineView();
 
     const file1 = new File(['c1'], 'Report_A.pdf', { type: 'application/pdf' });
     const file2 = new File(['c2'], 'Report_B.pdf', { type: 'application/pdf' });
@@ -114,7 +121,7 @@ describe('EngineView — ASE-59: multi-file routes to staging queue', () => {
   });
 
   it('shows the RESUME FAILED TASKS button only when at least one queue item is in failed state', async () => {
-    render(<EngineView />);
+    renderEngineView();
 
     // Stage 2 files so the queue grid renders
     const file1 = new File(['c1'], 'Audit_X.pdf', { type: 'application/pdf' });

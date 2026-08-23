@@ -4,7 +4,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import ManagerDashboard from '../components/ManagerDashboard';
+
+// [P1-6] ManagerDashboard fetches through the axios instance in ../lib/api,
+// not window.fetch. The old global.fetch stub therefore never intercepted
+// anything and every test hit the network and failed. Mock the real module.
+vi.mock('../lib/api', () => ({
+  default: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), put: vi.fn(), delete: vi.fn() },
+}));
+import api from '../lib/api';
+
+// [P1-6] ManagerDashboard calls useNavigate(); rendering it outside a Router threw
+// and failed every test in this file. Component is correct, harness was stale.
 
 // Realistic sample dataset mirroring /history/recent response shape
 const SAMPLE_APPRAISALS = [
@@ -15,16 +27,13 @@ const SAMPLE_APPRAISALS = [
 ];
 
 beforeEach(() => {
-  global.fetch = vi.fn(() =>
-    Promise.resolve({
-      json: () => Promise.resolve({ status: 'success', data: SAMPLE_APPRAISALS }),
-    })
-  );
+  vi.clearAllMocks();
+  api.get.mockResolvedValue({ data: { status: 'success', data: SAMPLE_APPRAISALS } });
 });
 
 describe('ManagerDashboard — Search filter', () => {
   it('shows all records when search query is empty', async () => {
-    render(<ManagerDashboard theme="dark" onExit={() => {}} />);
+    render(<ManagerDashboard theme="dark" onExit={() => {}} />, { wrapper: MemoryRouter });
     await waitFor(() => expect(screen.getByText('Vikram Precision Engineering')).toBeInTheDocument());
 
     expect(screen.getByText('Shree Balaji Textiles')).toBeInTheDocument();
@@ -34,7 +43,7 @@ describe('ManagerDashboard — Search filter', () => {
 
   it('filters records by company name substring, case-insensitively', async () => {
     const user = userEvent.setup();
-    render(<ManagerDashboard theme="dark" onExit={() => {}} />);
+    render(<ManagerDashboard theme="dark" onExit={() => {}} />, { wrapper: MemoryRouter });
     await waitFor(() => expect(screen.getByText('Vikram Precision Engineering')).toBeInTheDocument());
 
     const searchBox = screen.getByPlaceholderText('Search entities...');
@@ -50,7 +59,7 @@ describe('ManagerDashboard — Search filter', () => {
 
   it('shows zero results for a search query matching nothing', async () => {
     const user = userEvent.setup();
-    render(<ManagerDashboard theme="dark" onExit={() => {}} />);
+    render(<ManagerDashboard theme="dark" onExit={() => {}} />, { wrapper: MemoryRouter });
     await waitFor(() => expect(screen.getByText('Vikram Precision Engineering')).toBeInTheDocument());
 
     const searchBox = screen.getByPlaceholderText('Search entities...');
@@ -65,7 +74,7 @@ describe('ManagerDashboard — Search filter', () => {
 
 describe('ManagerDashboard — Status filter', () => {
   it('"ALL" filter shows every record regardless of decision', async () => {
-    render(<ManagerDashboard theme="dark" onExit={() => {}} />);
+    render(<ManagerDashboard theme="dark" onExit={() => {}} />, { wrapper: MemoryRouter });
     await waitFor(() => expect(screen.getByText('Vikram Precision Engineering')).toBeInTheDocument());
 
     expect(screen.getAllByText(/APPROVE|REJECT|MANUAL REVIEW/).length).toBeGreaterThanOrEqual(4);
@@ -73,7 +82,7 @@ describe('ManagerDashboard — Status filter', () => {
 
   it('clicking the APPROVE filter shows only approved records', async () => {
     const user = userEvent.setup();
-    render(<ManagerDashboard theme="dark" onExit={() => {}} />);
+    render(<ManagerDashboard theme="dark" onExit={() => {}} />, { wrapper: MemoryRouter });
     await waitFor(() => expect(screen.getByText('Vikram Precision Engineering')).toBeInTheDocument());
 
     const approveButton = screen.getByRole('button', { name: /^APPROVE$/i });
@@ -87,7 +96,7 @@ describe('ManagerDashboard — Status filter', () => {
 
   it('clicking the REJECT filter shows only rejected records', async () => {
     const user = userEvent.setup();
-    render(<ManagerDashboard theme="dark" onExit={() => {}} />);
+    render(<ManagerDashboard theme="dark" onExit={() => {}} />, { wrapper: MemoryRouter });
     await waitFor(() => expect(screen.getByText('Vikram Precision Engineering')).toBeInTheDocument());
 
     const rejectButton = screen.getByRole('button', { name: /^REJECT$/i });
@@ -101,7 +110,7 @@ describe('ManagerDashboard — Status filter', () => {
 
   it('search and status filter combine correctly (AND logic, not OR)', async () => {
     const user = userEvent.setup();
-    render(<ManagerDashboard theme="dark" onExit={() => {}} />);
+    render(<ManagerDashboard theme="dark" onExit={() => {}} />, { wrapper: MemoryRouter });
     await waitFor(() => expect(screen.getByText('Vikram Precision Engineering')).toBeInTheDocument());
 
     const searchBox = screen.getByPlaceholderText('Search entities...');
