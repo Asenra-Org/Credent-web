@@ -119,6 +119,12 @@ export default function EngineView() {
   const [progress, setProgress] = useState(0);
   const stopProcessingRef = useRef(false);
 
+
+  // Ingestion Task Queue & Folder Staging State
+  const [queueItems, setQueueItems] = useState([]);
+  const [activeQueueItemId, setActiveQueueItemId] = useState(null);
+  const [isProcessingQueue, setIsProcessingQueue] = useState(false);
+
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (isProcessingQueue || appStatus === 'processing') {
@@ -130,11 +136,6 @@ export default function EngineView() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isProcessingQueue, appStatus]);
 
-
-  // Ingestion Task Queue & Folder Staging State
-  const [queueItems, setQueueItems] = useState([]);
-  const [activeQueueItemId, setActiveQueueItemId] = useState(null);
-  const [isProcessingQueue, setIsProcessingQueue] = useState(false);
 
   const fileInputRef = useRef(null);
   const folderInputRef = useRef(null);
