@@ -114,7 +114,7 @@ export default function EngineView() {
   const [osintData, setOsintData] = useState(null);
   const [finalScore, setFinalScore] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
-  const [activeTab, setActiveTab] = useState('CREDIT APPRAISAL');
+  const [activeTab, setActiveTab] = useState('EXECUTIVE SUMMARY');
   const [logs, setLogs] = useState([]);
   const [progress, setProgress] = useState(0);
 
@@ -1432,8 +1432,8 @@ export default function EngineView() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                       
                       {/* Inside Container Navigation Tabs */}
-                      <div style={{ display: 'flex', borderBottom: '1px solid #cbd5e1', gap: '0.25rem' }}>
-                        {['EXECUTIVE SUMMARY', 'CREDIT ASSESSMENT (5Cs)', 'RISKS & GAPS', 'SYSTEM LOGS'].map(tab => (
+                      <div style={{ display: 'flex', borderBottom: '1px solid #cbd5e1', gap: '0.25rem', overflowX: 'auto' }}>
+                        {['EXECUTIVE SUMMARY', 'CREDIT ASSESSMENT (5Cs)', 'FINANCIAL STATEMENTS', 'RISKS & GAPS', 'SYSTEM LOGS'].map(tab => (
                           <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
@@ -1448,7 +1448,8 @@ export default function EngineView() {
                               cursor: 'pointer',
                               textTransform: 'uppercase',
                               letterSpacing: '0.03em',
-                              transition: 'color 0.15s'
+                              transition: 'color 0.15s',
+                              whiteSpace: 'nowrap'
                             }}
                           >
                             {tab}
@@ -1459,8 +1460,53 @@ export default function EngineView() {
                       {/* Tab Contents */}
                       <div style={{ minHeight: '200px' }}>
                         
+                        {/* Tab 0: Executive Summary */}
+                        {activeTab === 'EXECUTIVE SUMMARY' && (
+                          <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                              <div>
+                                <div style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase', fontWeight: 600 }}>Industry</div>
+                                <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', marginTop: '0.25rem' }}>{camReport?.executive_summary?.industry || 'N/A'}</div>
+                              </div>
+                              <div>
+                                <div style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase', fontWeight: 600 }}>Revenue</div>
+                                <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', marginTop: '0.25rem' }}>{camReport?.executive_summary?.revenue || 'N/A'}</div>
+                              </div>
+                              <div>
+                                <div style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase', fontWeight: 600 }}>EBITDA</div>
+                                <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', marginTop: '0.25rem' }}>{camReport?.executive_summary?.ebitda || 'N/A'}</div>
+                              </div>
+                              <div>
+                                <div style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase', fontWeight: 600 }}>PAT</div>
+                                <div style={{ fontSize: '13px', fontWeight: 500, color: '#18181b', marginTop: '0.25rem' }}>{camReport?.executive_summary?.pat || 'N/A'}</div>
+                              </div>
+                            </div>
+                            <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '0.5rem 0' }} />
+                            <div>
+                              <div style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase', fontWeight: 600, marginBottom: '0.5rem' }}>Key Strengths</div>
+                              <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '12px', color: '#3f3f46', lineHeight: '1.5' }}>
+                                {(camReport?.executive_summary?.strengths || []).map((s, i) => <li key={i}>{s}</li>)}
+                              </ul>
+                            </div>
+                            <div>
+                              <div style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase', fontWeight: 600, marginBottom: '0.5rem' }}>Key Concerns</div>
+                              <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '12px', color: '#3f3f46', lineHeight: '1.5' }}>
+                                {(camReport?.executive_summary?.key_concerns || []).map((c, i) => <li key={i}>{c}</li>)}
+                              </ul>
+                            </div>
+                            {(camReport?.executive_summary?.critical_conditions && camReport.executive_summary.critical_conditions.length > 0) && (
+                              <div>
+                                <div style={{ fontSize: '10px', color: '#ef4444', textTransform: 'uppercase', fontWeight: 600, marginBottom: '0.5rem' }}>Critical Conditions</div>
+                                <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '12px', color: '#b91c1c', lineHeight: '1.5' }}>
+                                  {camReport.executive_summary.critical_conditions.map((c, i) => <li key={i}>{c}</li>)}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         {/* Tab 1: Credit Appraisal Ledger */}
-                        {(activeTab === 'EXECUTIVE SUMMARY' || activeTab === 'CREDIT ASSESSMENT (5Cs)') && (
+                        {activeTab === 'CREDIT ASSESSMENT (5Cs)' && (
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
                             <thead>
                               <tr style={{ borderBottom: '1px solid #cbd5e1', color: '#71717a', textTransform: 'uppercase', fontSize: '10px' }}>
@@ -1482,7 +1528,7 @@ export default function EngineView() {
                         )}
 
                         {/* Tab 2: Financial Statements Table */}
-                        {(activeTab === 'CREDIT ASSESSMENT (5Cs)' || activeTab === 'FINANCIAL STATEMENTS') && (
+                        {activeTab === 'FINANCIAL STATEMENTS' && (
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
                             <thead>
                               <tr style={{ borderBottom: '1px solid #cbd5e1', color: '#71717a', textTransform: 'uppercase', fontSize: '10px' }}>
