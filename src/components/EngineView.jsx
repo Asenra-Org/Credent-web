@@ -385,14 +385,24 @@ export default function EngineView() {
             pollerAborted = true;
             break;
           }
+          
+          // The backend does not long-poll, so wait 1 second before checking again
+          await new Promise(r => setTimeout(r, 1000));
         } catch (err) {
           const httpStatus = err.response?.status;
           if (httpStatus === 404) {
-            // 404 = "Case not found" — the case_id is unknown. Stop polling gracefully.
-            pollerAborted = true;
-            break;
+            // 404 = "Case not found" — the case might not be created in the DB yet since we poll concurrently.
+            // Wait 2s and try again.
+            await new Promise(r => setTimeout(r, 2000));
+            continue;
           }
-          // Any other network error: continue polling (transient connectivity issue)
+          if (httpStatus === 429) {
+            // 429 = Rate limited — stop hammering, wait 10s before next attempt
+            await new Promise(r => setTimeout(r, 10000));
+            continue;
+          }
+          // Any other network error: wait 3s before retry (transient connectivity issue)
+          await new Promise(r => setTimeout(r, 3000));
         }
       }
     };
@@ -814,6 +824,12 @@ export default function EngineView() {
             <span>{sessionTime || '0000-00-00 00:00:00 UTC'}</span>
           </div>
           <Bell size={16} style={{ color: '#71717a', cursor: 'pointer' }} />
+          <Settings
+            size={16}
+            style={{ color: '#71717a', cursor: 'pointer' }}
+            title="Security Settings"
+            onClick={() => navigate('/settings')}
+          />
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <div style={{ 
               width: '24px', 
@@ -823,8 +839,12 @@ export default function EngineView() {
               color: '#ffffff', 
               display: 'flex', 
               alignItems: 'center', 
-              justifyContent: 'center'
-            }}>
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
+            onClick={() => navigate('/settings')}
+            title="Profile & Security"
+            >
               <User size={12} />
             </div>
           </div>

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Shield, ShieldAlert, Key, AlertTriangle, Loader2 } from 'lucide-react';
+import { Shield, ShieldAlert, Key, AlertTriangle, Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
 
 export default function ProfileSettings() {
-  const { user, refresh } = useAuthStore();
+  const { user, fetchProfile, accessToken } = useAuthStore();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -14,7 +16,7 @@ export default function ProfileSettings() {
 
   const handleEnrollMFA = async () => {
     try {
-      setLoading(true); setError(null);
+      setLoading(true); setError(null); setSuccess(null);
       const res = await api.post('/auth/mfa/enroll');
       setMfaUri(res.data.provisioning_uri);
     } catch (err) {
@@ -27,21 +29,21 @@ export default function ProfileSettings() {
     try {
       setLoading(true); setError(null);
       await api.post('/auth/mfa/activate', { code: verificationCode });
-      setSuccess('MFA activated successfully!');
+      setSuccess('2FA activated successfully! Your account is now secured.');
       setMfaUri(null); setVerificationCode('');
-      await refresh();
+      if (accessToken) await fetchProfile(accessToken);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid verification code');
+      setError(err.response?.data?.detail || 'Invalid verification code. Try again.');
     } finally { setLoading(false); }
   };
 
   const handleDisableMFA = async () => {
-    if (!window.confirm('Are you sure you want to disable MFA?')) return;
+    if (!window.confirm('Disable 2FA? Your account will be less secure.')) return;
     try {
-      setLoading(true); setError(null);
+      setLoading(true); setError(null); setSuccess(null);
       await api.post('/auth/mfa/disable');
-      setSuccess('MFA has been disabled.');
-      await refresh();
+      setSuccess('2FA has been disabled. You have been logged out of all sessions.');
+      if (accessToken) await fetchProfile(accessToken);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to disable MFA');
     } finally { setLoading(false); }
@@ -50,85 +52,241 @@ export default function ProfileSettings() {
   if (!user) return null;
 
   return (
-    <div className="max-w-3xl mx-auto p-8">
-      <div className="mb-8 border-b border-gray-200 pb-5">
-        <h1 className="text-3xl font-light tracking-tight text-zinc-900">Security Settings</h1>
-        <p className="text-zinc-500 mt-2 font-mono text-[10px] uppercase tracking-widest">
-          Manage your account security and authentication methods
-        </p>
-      </div>
-
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 shrink-0" />
-          <p>{error}</p>
+    <div style={{
+      minHeight: '100vh',
+      background: 'var(--bg-primary, #ffffff)',
+      fontFamily: 'var(--font-sans, system-ui, sans-serif)',
+      color: '#18181b',
+    }}>
+      {/* ── Header ── */}
+      <header style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 1.5rem',
+        height: '48px',
+        borderBottom: '1px solid #e4e4e7',
+        background: '#ffffff',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button
+            onClick={() => navigate(-1)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              background: 'none', border: '1px solid #e4e4e7',
+              padding: '4px 12px', cursor: 'pointer', color: '#71717a',
+              fontSize: '12px', borderRadius: 0,
+            }}
+          >
+            <ArrowLeft size={13} /> Back
+          </button>
+          <span style={{ fontSize: '11px', fontFamily: 'monospace', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            Security Settings
+          </span>
         </div>
-      )}
-
-      {success && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 text-sm flex items-start gap-3">
-          <Shield className="h-5 w-5 shrink-0" />
-          <p>{success}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{
+            width: '7px', height: '7px', borderRadius: '50%',
+            background: user.mfa_enabled ? '#16a34a' : '#d1d5db',
+          }} />
+          <span style={{ fontSize: '11px', fontFamily: 'monospace', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            {user.mfa_enabled ? '2FA ACTIVE' : '2FA INACTIVE'}
+          </span>
         </div>
-      )}
+      </header>
 
-      <div className="bg-white border border-gray-200 p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-4">
-            <div className={"p-3 border "}>
-              {user.mfa_enabled ? <Shield className="h-6 w-6 text-green-600" /> : <ShieldAlert className="h-6 w-6 text-zinc-400" />}
-            </div>
-            <div>
-              <h3 className="text-lg font-medium text-zinc-900">Two-Factor Authentication (2FA)</h3>
-              <p className="text-sm text-zinc-500 mt-1 max-w-lg">
-                Add an extra layer of security to your account.
-              </p>
-              <div className="mt-4 flex items-center gap-2">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Status:</span>
-                <span className={"text-xs font-medium px-2 py-0.5 border "}>
-                  {user.mfa_enabled ? 'ENABLED' : 'DISABLED'}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div>
-            {user.mfa_enabled ? (
-              <button onClick={handleDisableMFA} disabled={loading} className="px-4 py-2 border border-red-200 text-red-600 hover:bg-red-50 text-sm font-medium transition-colors disabled:opacity-50">
-                Disable 2FA
-              </button>
-            ) : !mfaUri && (
-              <button onClick={handleEnrollMFA} disabled={loading} className="px-4 py-2 bg-zinc-900 text-white hover:bg-zinc-800 text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2">
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4" />}
-                Set up 2FA
-              </button>
-            )}
-          </div>
+      {/* ── Body ── */}
+      <main style={{ maxWidth: '680px', margin: '0 auto', padding: '3rem 1.5rem' }}>
+
+        {/* Page title */}
+        <div style={{ marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '1px solid #e4e4e7' }}>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 300, letterSpacing: '-0.02em', margin: 0 }}>
+            Account Security
+          </h1>
+          <p style={{ fontSize: '11px', fontFamily: 'monospace', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '0.5rem' }}>
+            {user.email} · {user.role}
+          </p>
         </div>
 
-        {mfaUri && !user.mfa_enabled && (
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <h4 className="text-md font-medium text-zinc-900 mb-4">Complete 2FA Setup</h4>
-            <div className="flex flex-col md:flex-row gap-8">
-              <div className="flex flex-col items-center p-6 bg-gray-50 border border-gray-200">
-                <div className="bg-white p-2 border border-gray-200">
-                  <QRCodeSVG value={mfaUri} size={160} />
-                </div>
-              </div>
-              <div className="flex-1 flex flex-col justify-center">
-                <label className="font-mono text-[10px] uppercase tracking-widest text-zinc-500 block mb-2">Verify Setup Code</label>
-                <div className="flex items-center gap-3 max-w-xs">
-                  <input type="text" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" className="flex-1 border border-gray-300 p-2.5 text-center font-mono text-lg tracking-widest focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900" />
-                  <button onClick={handleActivateMFA} disabled={loading || verificationCode.length !== 6} className="px-6 py-3 bg-zinc-900 text-white hover:bg-zinc-800 text-sm font-medium transition-colors disabled:opacity-50">
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify'}
-                  </button>
-                </div>
-                <button onClick={() => { setMfaUri(null); setVerificationCode(''); }} className="mt-6 text-sm text-zinc-500 hover:text-zinc-900 underline text-left">Cancel setup</button>
-              </div>
-            </div>
+        {/* Alerts */}
+        {error && (
+          <div style={{
+            marginBottom: '1.5rem', padding: '1rem', background: '#fef2f2',
+            border: '1px solid #fecaca', color: '#dc2626',
+            display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '13px',
+          }}>
+            <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: '1px' }} />
+            {error}
           </div>
         )}
-      </div>
+        {success && (
+          <div style={{
+            marginBottom: '1.5rem', padding: '1rem', background: '#f0fdf4',
+            border: '1px solid #bbf7d0', color: '#16a34a',
+            display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '13px',
+          }}>
+            <CheckCircle size={16} style={{ flexShrink: 0, marginTop: '1px' }} />
+            {success}
+          </div>
+        )}
+
+        {/* ── 2FA Card ── */}
+        <div style={{ background: '#ffffff', border: '1px solid #e4e4e7', padding: '1.75rem' }}>
+
+          {/* Card header row */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+              <div style={{
+                padding: '10px', border: '1px solid #e4e4e7',
+                color: user.mfa_enabled ? '#16a34a' : '#71717a',
+              }}>
+                {user.mfa_enabled ? <Shield size={22} /> : <ShieldAlert size={22} />}
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1rem', fontWeight: 500, margin: 0 }}>
+                  Two-Factor Authentication (2FA)
+                </h3>
+                <p style={{ fontSize: '13px', color: '#71717a', marginTop: '4px', marginBottom: 0, maxWidth: '380px' }}>
+                  Adds a one-time code from your authenticator app as a second login step.
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '12px' }}>
+                  <span style={{ fontSize: '10px', fontFamily: 'monospace', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    Status:
+                  </span>
+                  <span style={{
+                    fontSize: '10px', fontFamily: 'monospace', fontWeight: 600,
+                    padding: '2px 8px', border: `1px solid ${user.mfa_enabled ? '#bbf7d0' : '#e4e4e7'}`,
+                    color: user.mfa_enabled ? '#16a34a' : '#71717a',
+                    textTransform: 'uppercase', letterSpacing: '0.08em',
+                    background: user.mfa_enabled ? '#f0fdf4' : 'transparent',
+                  }}>
+                    {user.mfa_enabled ? 'ENABLED' : 'DISABLED'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action button */}
+            <div style={{ flexShrink: 0 }}>
+              {user.mfa_enabled ? (
+                <button
+                  onClick={handleDisableMFA}
+                  disabled={loading}
+                  style={{
+                    padding: '8px 16px', border: '1px solid #fecaca', background: 'none',
+                    color: '#dc2626', cursor: 'pointer', fontSize: '12px', fontWeight: 500,
+                    borderRadius: 0, opacity: loading ? 0.5 : 1,
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                  }}
+                >
+                  {loading ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : null}
+                  Disable 2FA
+                </button>
+              ) : !mfaUri && (
+                <button
+                  onClick={handleEnrollMFA}
+                  disabled={loading}
+                  style={{
+                    padding: '8px 16px', background: '#18181b', color: '#ffffff',
+                    border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 500,
+                    borderRadius: 0, opacity: loading ? 0.5 : 1,
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                  }}
+                >
+                  {loading ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Key size={13} />}
+                  Set up 2FA
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* ── QR Code + Verify Step ── */}
+          {mfaUri && !user.mfa_enabled && (
+            <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid #e4e4e7' }}>
+              <p style={{ fontSize: '11px', fontFamily: 'monospace', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1.5rem' }}>
+                Step 1 — Scan this QR code with Google Authenticator / Authy
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'row', gap: '2.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                {/* QR Code */}
+                <div style={{
+                  padding: '1.25rem', background: '#ffffff',
+                  border: '2px solid #18181b', display: 'inline-block',
+                }}>
+                  <QRCodeSVG value={mfaUri} size={160} level="M" />
+                </div>
+
+                {/* Verify section */}
+                <div style={{ flex: 1, minWidth: '200px' }}>
+                  <p style={{ fontSize: '11px', fontFamily: 'monospace', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>
+                    Step 2 — Enter the 6-digit code from your app
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="000000"
+                      maxLength={6}
+                      style={{
+                        width: '130px', padding: '10px', textAlign: 'center',
+                        fontFamily: 'monospace', fontSize: '1.25rem', letterSpacing: '0.25em',
+                        border: '1px solid #d4d4d8', outline: 'none', borderRadius: 0,
+                        color: '#18181b', background: '#ffffff',
+                      }}
+                      onFocus={e => e.target.style.borderColor = '#18181b'}
+                      onBlur={e => e.target.style.borderColor = '#d4d4d8'}
+                    />
+                    <button
+                      onClick={handleActivateMFA}
+                      disabled={loading || verificationCode.length !== 6}
+                      style={{
+                        padding: '10px 20px', background: '#18181b', color: '#ffffff',
+                        border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 500,
+                        borderRadius: 0, opacity: (loading || verificationCode.length !== 6) ? 0.4 : 1,
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                      }}
+                    >
+                      {loading ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : null}
+                      Verify & Enable
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => { setMfaUri(null); setVerificationCode(''); }}
+                    style={{
+                      marginTop: '1rem', background: 'none', border: 'none',
+                      color: '#71717a', cursor: 'pointer', fontSize: '12px',
+                      textDecoration: 'underline', padding: 0,
+                    }}
+                  >
+                    Cancel setup
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Info note ── */}
+        {!user.mfa_enabled && !mfaUri && (
+          <div style={{
+            marginTop: '1rem', padding: '0.875rem 1rem',
+            background: '#fafafa', border: '1px solid #e4e4e7',
+            fontSize: '12px', color: '#71717a', lineHeight: '1.6',
+          }}>
+            💡 <strong>Recommended:</strong> Enable 2FA to protect this account against unauthorised access.
+            Works with Google Authenticator, Authy, or any TOTP-compatible app.
+          </div>
+        )}
+      </main>
+
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 }
-
