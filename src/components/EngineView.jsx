@@ -770,161 +770,12 @@ export default function EngineView() {
   const incompleteNotice = camReport ? getIncompleteNotice(camReport) : null;
 
   return (
-    <div style={{ 
-      height: '100vh', 
-      background: '#eaedf1', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      fontFamily: 'var(--font-family)',
-      color: '#27272a',
-      fontSize: '13px'
-    }}>
-      
-      {/* 1. TOPBAR (Background: #27272a) */}
-      <header style={{ 
-        background: '#ffffff', 
-        color: '#18181b', 
-        height: '52px', 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        borderBottom: '1px solid var(--border-light)',
-        flexShrink: 0
-      }}>
-        {/* Left Brand Header (Background: #222a33, width matches sidebar) */}
-        <div style={{ 
-          background: '#ffffff', 
-          width: '230px', 
-          height: '100%', 
-          display: 'flex', 
-          alignItems: 'center', 
-          padding: '0 1.25rem',
-          gap: '0.5rem',
-          fontWeight: 600,
-          fontSize: '14px',
-          letterSpacing: '0.02em',
-          borderRight: '1px solid var(--border-light)'
-        }}>
-          <img src="/logo.jpg" alt="Credent Logo" style={{ height: '24px', width: '24px', borderRadius: 0, objectFit: 'cover' }} />
-          <span style={{ fontSize: '15px' }}>Credent</span>
-        </div>
-        
-        {/* Middle Header Section */}
-        <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '1rem', flex: 1 }}>
-          <Menu size={20} style={{ cursor: 'pointer', color: '#71717a' }} />
-          <span style={{ marginLeft: '1rem', fontSize: '11px', color: '#71717a', fontFamily: 'var(--font-mono)' }}>
-            
-          </span>
-        </div>
+    <div className="cx-engine-legacy">
 
-        {/* Right Header Section */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', paddingRight: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '11px', color: '#71717a', fontFamily: 'var(--font-mono)' }}>
-            <Clock size={12} color="#18181b" />
-            <span>{sessionTime || '0000-00-00 00:00:00 UTC'}</span>
-          </div>
-          <Bell size={16} style={{ color: '#71717a', cursor: 'pointer' }} />
-          <Settings
-            size={16}
-            style={{ color: '#71717a', cursor: 'pointer' }}
-            title="Security Settings"
-            onClick={() => navigate('/settings')}
-          />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <div style={{ 
-              width: '24px', 
-              height: '24px', 
-              borderRadius: 0, 
-              background: '#18181b', 
-              color: '#ffffff', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              cursor: 'pointer'
-            }}
-            onClick={() => navigate('/settings')}
-            title="Profile & Security"
-            >
-              <User size={12} />
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* 2. BODY CONTAINER */}
-      <div style={{ 
-        flex: 1, 
-        display: 'flex', 
-        overflowY: 'auto' 
-      }}>
-        
-        {/* LEFT SIDEBAR (Background: #ffffff) */}
-        <aside style={{ 
-          width: '230px', 
-          background: '#ffffff', borderRadius: 0, boxShadow: 'none', 
-          borderRight: '1px solid #e4e4e7', 
-          display: 'flex', 
-          flexDirection: 'column',
-          flexShrink: 0
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column', padding: '0.75rem 0' }}>
-            
-            {/* Sidebar Item 1: Appraisal Terminal (Active view) */}
-            <div 
-              onClick={() => setCurrentView('terminal')}
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                padding: '0.6rem 1.25rem', 
-                background: '#fafafa', 
-                color: '#18181b', 
-                fontWeight: 600,
-                borderLeft: '3px solid #18181b',
-                cursor: 'pointer'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <LayoutDashboard size={16} />
-                <span>Appraisal Terminal</span>
-              </div>
-            </div>
-
-
-
-            {/* Sidebar Item 3: Manager Dashboard */}
-            <div 
-              onClick={() => navigate('/dashboard')}
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                padding: '0.6rem 1.25rem', 
-                background: 'transparent', 
-                color: '#71717a', 
-                fontWeight: 400,
-                borderLeft: '3px solid transparent',
-                cursor: 'pointer'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Shield size={16} />
-                <span>Manager Dashboard</span>
-              </div>
-            </div>
-
-          </div>
-        </aside>
-
-        {/* MAIN CONTENT AREA */}
-        <main style={{ 
-          flex: 1, 
-          padding: '1.25rem', 
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: '1rem',
-          overflowY: 'auto'
-        }}>
+      {/* Chrome removed: the application shell provides the header and
+          navigation. This view now renders only its own content. */}
+      <div>
+        <div className="cx-engine-legacy__content">
           
           {/* VIEW A: APPRAISAL TERMINAL */}
           <>
@@ -1744,7 +1595,7 @@ export default function EngineView() {
               </div>
             </>
 
-        </main>
+        </div>
       </div>
     </div>
   );

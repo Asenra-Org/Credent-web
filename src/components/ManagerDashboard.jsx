@@ -214,33 +214,22 @@ export default function ManagerDashboard({ theme }) {
           100% { opacity: 0.4; transform: scale(0.995); }
         }
       `}</style>
-      <header className="hud-header" style={{ marginBottom: '2.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/engine')}
-            style={{ background: 'var(--bg-primary)', border: '1px solid #e4e4e7', color: '#09090b', padding: '0.5rem 1rem', borderRadius: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
-          >
-            <ArrowLeft size={16} /> Exit Terminal
-          </motion.button>
-          <div className="hud-brand" style={{ fontSize: '1.5rem' }}><ShieldCheck color="#18181b" size={28} /> Institutional Manager</div>
+      {/* The application shell supplies the brand, navigation and settings.
+          The legacy header also linked to /engine, which an UNDERWRITING_MANAGER
+          is not permitted to open, so only the live-sync indicator is kept. */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          marginBottom: '1.5rem',
+        }}
+      >
+        <div style={{ color: '#71717a', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ width: '6px', height: '6px', borderRadius: 0, background: loading ? '#71717a' : '#18181b' }} />
+          {loading ? 'Cloud Syncing...' : 'Live Cloud Pulse'}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-           <div style={{ color: '#71717a', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: 0, background: loading ? '#71717a' : '#18181b', boxShadow: loading ? '0 0 5px #71717a' : '0 0 5px #18181b' }}></div>
-              {loading ? 'Cloud Syncing...' : 'Live Cloud Pulse'}
-           </div>
-           <button
-             onClick={() => navigate('/settings')}
-             title="Security Settings / MFA"
-             style={{ background: 'none', border: '1px solid #e4e4e7', padding: '4px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', color: '#71717a', fontSize: '11px', borderRadius: 0 }}
-           >
-             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-             Security
-           </button>
-        </div>
-      </header>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '2rem' }}>
         {/* SIDEBAR STATS */}
