@@ -1,13 +1,23 @@
 import { create } from 'zustand';
 import axios from 'axios';
+import {
+  MAX_REFRESH_ATTEMPTS,
+  SessionExpiredError,
+  TransientAuthError,
+  classifyRefreshFailure,
+  refreshBackoffMs,
+} from '../lib/authErrors';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+// Same-origin by default, matching lib/api.js - see the note there.
+const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';
 const API_URL = API_BASE.endsWith('/api/v1') ? API_BASE : `${API_BASE.replace(/\/$/, '')}/api/v1`;
 
 // Separate axios instance for auth calls to avoid interceptor loops
 const authApi = axios.create({
   baseURL: API_URL,
-  timeout: 30000,
+  // A cold Render instance, or one busy with an appraisal, routinely needs
+  // longer than 30s to answer. Timing out early used to look like a logout.
+  timeout: 60000,
   withCredentials: true,
 });
 
@@ -77,22 +87,51 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  /**
+   * Exchange the refresh cookie for a new access token.
+   *
+   * Authentication is cleared ONLY when the server definitively says the
+   * session is invalid (401/403). A timeout, a 5xx or a rate limit means the
+   * server could not answer - not that the user is signed out - so those are
+   * retried with bounded backoff and then reported as transient, leaving the
+   * session intact.
+   *
+   * This is the fix for analysts being ejected mid-appraisal: the single
+   * backend worker is busy doing OCR, refresh times out, and the old code read
+   * that as "session expired".
+   */
   refresh: async () => {
-    try {
-      const res = await authApi.post('/auth/refresh');
-      const token = res.data.access_token;
-      set({ accessToken: token, isAuthenticated: true });
-      
-      // Refresh profile too
-      if (!get().user) {
-        await get().fetchProfile(token);
+    let lastError = null;
+
+    for (let attempt = 0; attempt < MAX_REFRESH_ATTEMPTS; attempt += 1) {
+      try {
+        const res = await authApi.post('/auth/refresh');
+        const token = res.data.access_token;
+        set({ accessToken: token, isAuthenticated: true });
+
+        if (!get().user) {
+          await get().fetchProfile(token);
+        }
+        return token;
+      } catch (err) {
+        lastError = err;
+
+        if (classifyRefreshFailure(err) === 'invalid') {
+          // The server is certain. Sign out.
+          get().clearAuth();
+          throw new SessionExpiredError(err?.response?.status);
+        }
+
+        // Transient. Back off and try again, unless this was the last attempt.
+        if (attempt < MAX_REFRESH_ATTEMPTS - 1) {
+          await new Promise((resolve) => setTimeout(resolve, refreshBackoffMs(attempt)));
+        }
       }
-      
-      return token;
-    } catch (err) {
-      get().clearAuth();
-      throw err;
     }
+
+    // Out of attempts. The session has NOT been proven invalid, so auth state
+    // is deliberately preserved and the caller decides what to do.
+    throw new TransientAuthError(lastError, MAX_REFRESH_ATTEMPTS);
   },
 
   logout: async () => {

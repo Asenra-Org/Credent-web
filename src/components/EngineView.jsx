@@ -16,6 +16,7 @@ import {
   XCircle, HelpCircle, Folder, RefreshCw, Play, Eye, Plus, AlertOctagon
 } from 'lucide-react';
 import { downloadPDF } from '../utils/generatePdf';
+import { isTransientApiError } from '../lib/apiError';
 
 const formatToCr = (val) => {
   if (val === null || val === undefined || isNaN(val)) return 'N/A';
@@ -356,6 +357,11 @@ export default function EngineView() {
     // (blocks rather than returning immediately), so we loop sequentially rather
     // than using setInterval. A 404 with {"detail":"Case not found."} is terminal
     // — it means the ID is invalid, not "not ready yet".
+    // Bounded: the poller survives transient failures, but a backend that never
+    // recovers must not leave it spinning indefinitely.
+    const MAX_CONSECUTIVE_POLL_FAILURES = 60;   // ~3 minutes at 3s per retry
+    let consecutivePollFailures = 0;
+
     const pollStatus = async () => {
       while (!pollerAborted) {
         try {
@@ -363,6 +369,7 @@ export default function EngineView() {
             `documents/ingest/status/${caseId}`,
             { timeout: 30000 }  // generous timeout — endpoint long-polls server-side
           );
+          consecutivePollFailures = 0;
           const s = statusRes.data;
           // Apply real backend fields: progress (0-100 number), stage (string), status (string)
           const backendProgress = typeof s.progress === 'number' ? s.progress : null;
@@ -401,7 +408,14 @@ export default function EngineView() {
             await new Promise(r => setTimeout(r, 10000));
             continue;
           }
-          // Any other network error: wait 3s before retry (transient connectivity issue)
+          // Any other network error: transient connectivity. Retry, but with a
+          // bound so a permanently dead backend cannot spin here forever.
+          consecutivePollFailures += 1;
+          if (consecutivePollFailures >= MAX_CONSECUTIVE_POLL_FAILURES) {
+            addLog('QUEUE', `Status polling stopped after ${consecutivePollFailures} consecutive failures.`);
+            pollerAborted = true;
+            break;
+          }
           await new Promise(r => setTimeout(r, 3000));
         }
       }
@@ -535,6 +549,20 @@ export default function EngineView() {
       addLog('QUEUE', `Task ${taskId} completed successfully.`);
       return true;
     } catch (err) {
+      // A transient failure - timeout, 5xx, 429, dropped connection - means this
+      // request did not complete. It does NOT mean the analysis failed: the
+      // backend is very likely still processing. Marking the case FAILED here
+      // would turn an infrastructure blip into a credit-analysis outcome, so the
+      // poller is left running to drive the case to its real terminal state.
+      if (isTransientApiError(err)) {
+        setQueueItems(prev => prev.map(item => item.id === taskId ? {
+          ...item, step: 'RECONNECTING'
+        } : item));
+        addLog('QUEUE', `Task ${taskId}: connection interrupted (${err.message}). Analysis continues on the server; polling for the real result.`);
+        await pollerPromise;
+        return false;
+      }
+
       pollerAborted = true;
       await pollerPromise;
       console.error(`Task ${taskId} failed:`, err);

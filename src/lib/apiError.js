@@ -109,3 +109,21 @@ export const isUnauthorized = (e) => e?.response?.status === 401;
 export const isForbidden = (e) => e?.response?.status === 403;
 export const isRateLimited = (e) => e?.response?.status === 429;
 export const isNotFound = (e) => e?.response?.status === 404;
+
+/**
+ * True when a request failed without the server reaching a verdict.
+ *
+ * A timeout, a dropped connection, a 429 or any 5xx means the request did not
+ * complete - not that the work behind it failed. During an appraisal the
+ * backend may still be processing perfectly well, so a caller seeing one of
+ * these should retry or keep polling rather than declaring the run dead.
+ *
+ * A 4xx other than 429 is a real answer and is not transient.
+ */
+export function isTransientApiError(error) {
+  const status = error?.response?.status;
+  if (!error?.response) return true;      // timeout, reset, offline, CORS
+  if (status === 429) return true;
+  if (status >= 500) return true;
+  return false;
+}

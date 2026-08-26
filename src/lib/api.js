@@ -1,7 +1,15 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
+import { isSessionInvalid } from './authErrors';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+// Same-origin by default. In development Vite proxies /api to localhost:8000
+// (see vite.config.js); in production Vercel rewrites /api to the Render
+// service (see vercel.json). Both keep the httpOnly refresh_token cookie
+// first-party. Pointing the browser straight at the API host would make it a
+// third-party cookie, which browsers increasingly refuse to send - refresh
+// would then fail permanently rather than intermittently.
+// An explicit VITE_API_URL still wins, so existing deployments are unaffected.
+const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';
 const API_URL = API_BASE.endsWith('/api/v1') ? API_BASE : `${API_BASE.replace(/\/$/, '')}/api/v1`;
 
 const api = axios.create({
@@ -56,8 +64,18 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        useAuthStore.getState().clearAuth();
-        window.location.href = '/login';
+
+        // Only a definitive 401/403 from /auth/refresh proves the session is
+        // gone. refresh() has already cleared auth in that case.
+        //
+        // A timeout or 5xx means the server could not answer - which is
+        // exactly what happens while the single worker is busy with an
+        // appraisal. Redirecting there would destroy a live run on the
+        // strength of a network blip, so authentication state is preserved
+        // and the error is handed back for the caller to retry.
+        if (isSessionInvalid(refreshError)) {
+          window.location.href = '/login';
+        }
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
