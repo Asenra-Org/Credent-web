@@ -1,0 +1,37 @@
+import { create } from 'zustand';
+
+const useEngineStore = create((set, get) => ({
+  appStatus: 'idle',
+  file: null,
+  isDragging: false,
+  detectedParams: null,
+  forensicsReport: null,
+  camReport: null,
+  osintData: null,
+  finalScore: 0,
+  errorMessage: '',
+  activeTab: 'EXECUTIVE SUMMARY',
+  logs: [],
+  progress: 0,
+  queueItems: [],
+  activeQueueItemId: null,
+  isProcessingQueue: false,
+
+  setAppStatus: (val) => set({ appStatus: val }),
+  setFile: (val) => set({ file: val }),
+  setIsDragging: (val) => set({ isDragging: val }),
+  setDetectedParams: (val) => set({ detectedParams: typeof val === 'function' ? val(get().detectedParams) : val }),
+  setForensicsReport: (val) => set({ forensicsReport: typeof val === 'function' ? val(get().forensicsReport) : val }),
+  setCamReport: (val) => set({ camReport: typeof val === 'function' ? val(get().camReport) : val }),
+  setOsintData: (val) => set({ osintData: typeof val === 'function' ? val(get().osintData) : val }),
+  setFinalScore: (val) => set({ finalScore: typeof val === 'function' ? val(get().finalScore) : val }),
+  setErrorMessage: (val) => set({ errorMessage: typeof val === 'function' ? val(get().errorMessage) : val }),
+  setActiveTab: (val) => set({ activeTab: typeof val === 'function' ? val(get().activeTab) : val }),
+  setLogs: (val) => set({ logs: typeof val === 'function' ? val(get().logs) : val }),
+  setProgress: (val) => set({ progress: typeof val === 'function' ? val(get().progress) : val }),
+  setQueueItems: (val) => set({ queueItems: typeof val === 'function' ? val(get().queueItems) : val }),
+  setActiveQueueItemId: (val) => set({ activeQueueItemId: typeof val === 'function' ? val(get().activeQueueItemId) : val }),
+  setIsProcessingQueue: (val) => set({ isProcessingQueue: typeof val === 'function' ? val(get().isProcessingQueue) : val }),
+}));
+
+export default useEngineStore;

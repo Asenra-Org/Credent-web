@@ -16,6 +16,7 @@ import {
   XCircle, HelpCircle, Folder, RefreshCw, Play, Eye, Plus, AlertOctagon
 } from 'lucide-react';
 import { downloadPDF } from '../utils/generatePdf';
+import useEngineStore from '../stores/engineStore';
 
 const formatToCr = (val) => {
   if (val === null || val === undefined || isNaN(val)) return 'N/A';
@@ -105,23 +106,25 @@ export const getIncompleteNotice = (report) => {
 };
 
 export default function EngineView() {
-  const [appStatus, setAppStatus] = useState('idle');
-  const [file, setFile] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [detectedParams, setDetectedParams] = useState(null);
-  const [forensicsReport, setForensicsReport] = useState(null);
-  const [camReport, setCamReport] = useState(null);
-  const [osintData, setOsintData] = useState(null);
-  const [finalScore, setFinalScore] = useState(0);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [activeTab, setActiveTab] = useState('EXECUTIVE SUMMARY');
-  const [logs, setLogs] = useState([]);
-  const [progress, setProgress] = useState(0);
+  const {
+    appStatus, setAppStatus,
+    file, setFile,
+    isDragging, setIsDragging,
+    detectedParams, setDetectedParams,
+    forensicsReport, setForensicsReport,
+    camReport, setCamReport,
+    osintData, setOsintData,
+    finalScore, setFinalScore,
+    errorMessage, setErrorMessage,
+    activeTab, setActiveTab,
+    logs, setLogs,
+    progress, setProgress,
+    queueItems, setQueueItems,
+    activeQueueItemId, setActiveQueueItemId,
+    isProcessingQueue, setIsProcessingQueue
+  } = useEngineStore();
 
   // Ingestion Task Queue & Folder Staging State
-  const [queueItems, setQueueItems] = useState([]);
-  const [activeQueueItemId, setActiveQueueItemId] = useState(null);
-  const [isProcessingQueue, setIsProcessingQueue] = useState(false);
 
   const fileInputRef = useRef(null);
   const folderInputRef = useRef(null);
