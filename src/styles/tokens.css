@@ -1,0 +1,160 @@
+/**
+ * ============================================================
+ *  CRESEM — Design tokens
+ *  © 2026 Asenra. All Rights Reserved.
+ * ============================================================
+ *
+ *  The visual language is enterprise banking infrastructure:
+ *  restrained colour, strong typography, dense readable tables,
+ *  sharp corners, subtle borders. Colour is used to carry meaning
+ *  (risk, status, severity) and almost never for decoration.
+ *
+ *  Every value a component needs lives here so that a screen never
+ *  hard-codes a hex value. Existing screens that still use inline
+ *  styles keep working untouched; they are migrated as they are
+ *  rebuilt.
+ */
+
+:root {
+  /* ---- Neutral ramp. The product is mostly these. ---- */
+  --c-ink-950: #0b0f1a;
+  --c-ink-900: #11172a;
+  --c-ink-800: #1c2436;
+  --c-ink-700: #313c52;
+  --c-ink-600: #4a5670;
+  --c-ink-500: #6b7691;
+  --c-ink-400: #8e98af;
+  --c-ink-300: #b4bccd;
+  --c-ink-200: #d5dae4;
+  --c-ink-100: #e8ebf1;
+  --c-ink-050: #f4f6f9;
+  --c-white: #ffffff;
+
+  /* ---- Institutional accent. Used for primary action and focus. ---- */
+  --c-accent-900: #0a1e3d;
+  --c-accent-800: #0d2951;
+  --c-accent-700: #123a70;
+  --c-accent-600: #1a4f93;
+  --c-accent-500: #2b66b8;
+  --c-accent-100: #dce7f5;
+  --c-accent-050: #eef4fb;
+
+  /* ---- Semantic. Meaning only, never decoration. ---- */
+  --c-positive-700: #14603c;
+  --c-positive-600: #1a7a4c;
+  --c-positive-100: #d8efe3;
+  --c-warning-700: #8a5a06;
+  --c-warning-600: #a86f09;
+  --c-warning-100: #fbeecf;
+  --c-critical-700: #8c1c1c;
+  --c-critical-600: #b02525;
+  --c-critical-100: #f8dcdc;
+  --c-info-700: #1c4f8c;
+  --c-info-600: #2563a8;
+  --c-info-100: #dce8f6;
+  --c-neutral-700: var(--c-ink-700);
+  --c-neutral-600: var(--c-ink-600);
+  --c-neutral-100: var(--c-ink-100);
+
+  /* ---- Surfaces ---- */
+  --surface-page: #f4f6f9;
+  --surface-raised: #ffffff;
+  --surface-sunken: #eef1f6;
+  --surface-header: #0b1a33;
+  --surface-sidebar: #ffffff;
+  --surface-hover: #f4f6f9;
+  --surface-selected: var(--c-accent-050);
+
+  /* ---- Text ---- */
+  --text-primary: var(--c-ink-900);
+  --text-secondary: var(--c-ink-600);
+  --text-tertiary: var(--c-ink-500);
+  --text-inverse: #ffffff;
+  --text-inverse-muted: #9fb0ca;
+  --text-link: var(--c-accent-600);
+
+  /* ---- Borders. Subtle, never heavy. ---- */
+  --border-default: #d5dae4;
+  --border-subtle: #e8ebf1;
+  --border-strong: #b4bccd;
+  --border-focus: var(--c-accent-600);
+
+  /* ---- Typography ---- */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  --font-mono: "Geist Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo,
+    monospace;
+
+  --fs-2xs: 10px;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-base: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+  --fs-2xl: 26px;
+  --fs-3xl: 32px;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  --lh-tight: 1.25;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.65;
+
+  --tracking-wide: 0.06em;
+  --tracking-wider: 0.1em;
+
+  /* ---- Spacing. 4px base. ---- */
+  --sp-0: 0;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+
+  /* ---- Geometry. Sharp, per the product direction. ---- */
+  --radius: 0px;
+  --radius-pill: 0px;
+  --border-width: 1px;
+
+  /* ---- Elevation. Almost flat; a hairline does the work. ---- */
+  --shadow-none: none;
+  --shadow-overlay: 0 8px 28px rgba(11, 26, 51, 0.16);
+  --shadow-popover: 0 4px 14px rgba(11, 26, 51, 0.12);
+
+  /* ---- Layout ---- */
+  --shell-header-h: 52px;
+  --shell-sidebar-w: 232px;
+  --shell-sidebar-collapsed-w: 56px;
+  --shell-content-max: 1600px;
+
+  /* ---- Motion. Brief and functional. ---- */
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --ease: cubic-bezier(0.2, 0, 0.2, 1);
+
+  --z-sticky: 100;
+  --z-drawer: 200;
+  --z-overlay: 300;
+  --z-toast: 400;
+}
+
+/* Respect a user's reduced-motion preference across the whole product. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
