@@ -77,10 +77,10 @@ export default function App() {
               <Route path="/dashboard" element={<UnderwritingQueuePage />} />
               <Route path="/review" element={<ManagerDashboard />} />
             </Route>
-
-            <Route element={<ProtectedRoute requiredRoles={['CREDIT_ANALYST']} />}>
-              <Route path="/engine" element={<EngineView />} />
-            </Route>
+          </Route>
+          
+          <Route element={<ProtectedRoute requiredRoles={['CREDIT_ANALYST', 'SUPER_ADMIN', 'ORG_ADMIN']} />}>
+            <Route path="/engine" element={<EngineView />} />
           </Route>
         </Route>
 
@@ -89,3 +89,4 @@ export default function App() {
     </BrowserRouter>
   );
 }
+

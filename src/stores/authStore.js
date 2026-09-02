@@ -123,6 +123,10 @@ export const useAuthStore = create((set, get) => ({
     const timer = get()._refreshTimer;
     if (timer) clearTimeout(timer);
     set({ accessToken: null, user: null, isAuthenticated: false, error: null, _refreshTimer: null });
+    // Reset engine store state on logout
+    import('./engineStore').then(module => {
+      module.default.getState().reset();
+    });
   },
 
   hasRole: (role) => { const user = get().user; if (!user) return false; return user.role === role; },

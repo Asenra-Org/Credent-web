@@ -32,6 +32,23 @@ const useEngineStore = create((set, get) => ({
   setQueueItems: (val) => set({ queueItems: typeof val === 'function' ? val(get().queueItems) : val }),
   setActiveQueueItemId: (val) => set({ activeQueueItemId: typeof val === 'function' ? val(get().activeQueueItemId) : val }),
   setIsProcessingQueue: (val) => set({ isProcessingQueue: typeof val === 'function' ? val(get().isProcessingQueue) : val }),
+  reset: () => set({
+    appStatus: 'idle',
+    file: null,
+    isDragging: false,
+    detectedParams: null,
+    forensicsReport: null,
+    camReport: null,
+    osintData: null,
+    finalScore: 0,
+    errorMessage: '',
+    activeTab: 'EXECUTIVE SUMMARY',
+    logs: [],
+    progress: 0,
+    queueItems: [],
+    activeQueueItemId: null,
+    isProcessingQueue: false,
+  })
 }));
 
 export default useEngineStore;
