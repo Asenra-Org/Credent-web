@@ -801,24 +801,12 @@ export default function EngineView() {
   const incompleteNotice = camReport ? getIncompleteNotice(camReport) : null;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#f4f4f5' }}>
-      
-      {/* Standalone Header */}
-      <div style={{ height: '60px', background: '#18181b', color: 'white', display: 'flex', alignItems: 'center', padding: '0 1.5rem', justifyContent: 'space-between', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <Shield size={20} color="#3b82f6" />
-          <span style={{ fontWeight: 600, letterSpacing: '0.05em' }}>CREDENT <span style={{ fontWeight: 400, color: '#a1a1aa' }}>ANALYSIS ENGINE</span></span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <span style={{ fontSize: '12px', color: '#a1a1aa', fontFamily: 'var(--font-mono)' }}>{sessionTime}</span>
-          <button onClick={() => navigate('/')} style={{ background: '#3f3f46', border: 'none', color: 'white', padding: '0.4rem 1rem', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <ArrowRight size={14} style={{ transform: 'rotate(180deg)' }} /> Back to Dashboard
-          </button>
-        </div>
-      </div>
+    <div className="cx-engine-legacy">
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '2rem' }}>
-        <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
+      {/* Chrome removed: the application shell provides the header and
+          navigation. This view now renders only its own content. */}
+      <div>
+        <div className="cx-engine-legacy__content">
           
           {/* VIEW A: APPRAISAL TERMINAL */}
           <>
