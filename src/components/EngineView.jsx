@@ -219,8 +219,56 @@ export default function EngineView() {
     return extractedFiles;
   };
 
-  const addFilesToStagingQueue = (filesList, autoStart = false) => {
-    if (!filesList || filesList.length === 0) return;
+  // POST /documents/ingest/pdf accepts PDFs only and rejects anything else with
+  // a 400 before reading a byte. A folder picker hands us everything in the
+  // folder, so without this every spreadsheet, note and hidden file became a
+  // failed upload and a red row the analyst had to interpret. Skipped files are
+  // named in the log rather than dropped silently: a file that vanishes without
+  // explanation reads as the product losing it.
+  const PDF_ONLY = /\.pdf$/i;
+
+  const partitionUploadable = (filesList) => {
+    const accepted = [];
+    const skipped = [];
+    filesList.forEach((item) => {
+      const f = item.file || item;
+      const name = (f && f.name) || '';
+      if (!PDF_ONLY.test(name)) {
+        skipped.push({ name, reason: 'not a PDF' });
+      } else if (f.size === 0) {
+        skipped.push({ name, reason: 'file is empty' });
+      } else {
+        accepted.push(item);
+      }
+    });
+    return { accepted, skipped };
+  };
+
+  const addFilesToStagingQueue = (rawFilesList, autoStart = false) => {
+    if (!rawFilesList || rawFilesList.length === 0) return;
+
+    const { accepted: filesList, skipped } = partitionUploadable(rawFilesList);
+
+    if (skipped.length > 0) {
+      const at = new Date().toLocaleTimeString();
+      setLogs((prev) => [
+        ...prev,
+        `[${at}] Skipped ${skipped.length} file(s) the appraisal engine cannot read:`,
+        ...skipped.slice(0, 8).map((s) => `[${at}]   ${s.name} - ${s.reason}`),
+        ...(skipped.length > 8
+          ? [`[${at}]   ...and ${skipped.length - 8} more`]
+          : []),
+      ]);
+    }
+
+    if (filesList.length === 0) {
+      const at = new Date().toLocaleTimeString();
+      setLogs((prev) => [
+        ...prev,
+        `[${at}] No PDF found. Upload an audited financial statement as a PDF.`,
+      ]);
+      return;
+    }
 
     const newQueueItems = filesList.map((item, idx) => {
       const f = item.file || item;
@@ -304,6 +352,16 @@ export default function EngineView() {
       if (e.target.files.length === 1 && !isPipelineActive) {
         // Single file, pipeline idle → run directly with full progress bar
         const singleFile = e.target.files[0];
+        if (!/\.pdf$/i.test(singleFile.name) || singleFile.size === 0) {
+          const at = new Date().toLocaleTimeString();
+          setLogs((prev) => [
+            ...prev,
+            `[${at}] ${singleFile.name} was not uploaded - ` +
+              `${/\.pdf$/i.test(singleFile.name) ? 'the file is empty' : 'only PDF files can be appraised'}.`,
+          ]);
+          e.target.value = '';
+          return;
+        }
         resetState();
         runUnderwritingPipeline(singleFile);
       } else if (e.target.files.length === 1 && isPipelineActive) {
@@ -1038,7 +1096,7 @@ export default function EngineView() {
                           ref={fileInputRef} 
                           type="file" 
                           multiple 
-                          accept=".pdf,.xlsx,.csv,.txt" 
+                          accept=".pdf" 
                           style={{ display: 'none' }} 
                           onChange={handleFileChange} 
                         />
