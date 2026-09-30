@@ -898,21 +898,70 @@ export default function EngineView() {
                 flexDirection: 'column'
               }}>
                 
-                {/* Main Header Banner (Background: #27272a) */}
+                {/* Main Header Banner */}
                 <div style={{ 
                   background: '#ffffff', 
                   color: '#18181b', 
                   padding: '0.75rem 1.25rem', 
-                  borderBottom: '1px solid var(--border-light)'
+                  borderBottom: '1px solid var(--border-light)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
                 }}>
-                  <div style={{ fontWeight: 600, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
-                    {appStatus === 'complete' ? 'UNDERWRITING ANALYSIS RESULTS' : 'APPRAISAL DOSSIER INGESTION'}
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                      {appStatus === 'complete' ? 'UNDERWRITING ANALYSIS RESULTS' : 'APPRAISAL DOSSIER INGESTION'}
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#71717a', marginTop: '2px' }}>
+                      {appStatus === 'complete' 
+                        ? `Summary analysis for borrower: ${detectedParams?.company || camReport?.borrower_profile?.legal_name || camReport?.document_control?.borrower_name || 'Borrower'}` 
+                        : 'Submit a financial audit PDF file to run the credit valuation pipeline'}
+                    </div>
                   </div>
-                  <div style={{ fontSize: '10px', color: '#71717a', marginTop: '2px' }}>
-                    {appStatus === 'complete' 
-                      ? `Summary analysis for borrower: ${detectedParams?.company}` 
-                      : 'Submit a financial audit PDF file to run the credit valuation pipeline'}
-                  </div>
+                  {appStatus === 'complete' && (
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        type="button"
+                        onClick={handleDownloadPDF}
+                        style={{
+                          background: '#ffffff',
+                          color: '#18181b',
+                          border: '1px solid #cbd5e1',
+                          padding: '0.35rem 0.75rem',
+                          fontWeight: 600,
+                          fontSize: '11px',
+                          cursor: 'pointer',
+                          borderRadius: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}
+                      >
+                        <Download size={13} />
+                        <span>Export PDF</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={resetState}
+                        style={{
+                          background: '#18181b',
+                          color: '#ffffff',
+                          border: 'none',
+                          padding: '0.35rem 0.75rem',
+                          fontWeight: 600,
+                          fontSize: '11px',
+                          cursor: 'pointer',
+                          borderRadius: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}
+                      >
+                        <Plus size={13} />
+                        <span>New Appraisal</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Analysis Incomplete / Blocked notice. Rendered above the results so
@@ -1331,7 +1380,7 @@ export default function EngineView() {
                   )}
 
                   {/* Complete state: show detailed results table */}
-                  {appStatus === 'complete' && camReport && detectedParams && (
+                  {appStatus === 'complete' && camReport && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                       
                       {/* Inside Container Navigation Tabs */}
@@ -1443,17 +1492,17 @@ export default function EngineView() {
                             <tbody>
                               <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600 }}>Total Revenue (GSTR Correlation)</td>
-                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)', color: '#18181b' }}>{formatToCr(detectedParams.revenue)}</td>
+                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)', color: '#18181b' }}>{formatToCr(detectedParams?.revenue || camReport?.executive_summary?.revenue)}</td>
                                 <td style={{ padding: '0.6rem 0.75rem', color: '#18181b', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)' }}>VERIFIED</td>
                               </tr>
                               <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600 }}>Total Financial Borrowings (Bank Ledger)</td>
-                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)', color: '#18181b' }}>{formatToCr(detectedParams.debt)}</td>
+                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)', color: '#18181b' }}>{formatToCr(detectedParams?.debt || camReport?.executive_summary?.total_debt)}</td>
                                 <td style={{ padding: '0.6rem 0.75rem', color: '#18181b', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)' }}>VERIFIED</td>
                               </tr>
                               <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600 }}>Shareholder Net Worth</td>
-                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)', color: '#18181b' }}>{formatToCr(detectedParams.worth)}</td>
+                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)', color: '#18181b' }}>{formatToCr(detectedParams?.worth || camReport?.executive_summary?.net_worth)}</td>
                                 <td style={{ padding: '0.6rem 0.75rem', color: '#18181b', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)' }}>EXTRACTED</td>
                               </tr>
                             </tbody>
@@ -1618,6 +1667,22 @@ export default function EngineView() {
                     </div>
                   )}
 
+                  {/* Fallback if complete state reached without a report */}
+                  {appStatus === 'complete' && !camReport && (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3.5rem 1rem', gap: '0.75rem' }}>
+                      <CheckCircle2 size={32} color="#18181b" />
+                      <span style={{ fontWeight: 700, fontSize: '14px', color: '#18181b', fontFamily: 'var(--font-mono)' }}>APPRAISAL RUN COMPLETE</span>
+                      <p style={{ color: '#71717a', fontSize: '12px', textAlign: 'center', margin: 0, maxWidth: '420px', lineHeight: 1.5 }}>
+                        The engine has processed the document. You can inspect previous records from the Cases tab or start a new appraisal.
+                      </p>
+                      <button 
+                        onClick={resetState} 
+                        style={{ marginTop: '0.75rem', background: '#18181b', color: '#ffffff', border: 'none', padding: '0.5rem 1.25rem', cursor: 'pointer', borderRadius: 0, fontWeight: 600, fontSize: '11px' }}
+                      >
+                        Start New Appraisal
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </>
