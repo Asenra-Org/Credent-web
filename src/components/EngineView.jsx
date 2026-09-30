@@ -316,7 +316,9 @@ export default function EngineView() {
       if (extracted.length === 0) return;
 
       const isFromFolder = extracted.some(item => (item.path || '').includes('/'));
-      const isPipelineActive = isProcessingQueue || appStatus === 'processing';
+      // Only treat as active if literally mid-processing. 'complete' and 'failed' are
+      // terminal states — a new drop should always start fresh, not queue behind nothing.
+      const isPipelineActive = appStatus === 'processing';
 
       if (!isFromFolder && extracted.length === 1 && !isPipelineActive) {
         // Single bare file, nothing running → run directly with full progress bar
@@ -347,7 +349,8 @@ export default function EngineView() {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      const isPipelineActive = isProcessingQueue || appStatus === 'processing';
+      // Only treat as active if literally mid-processing.
+      const isPipelineActive = appStatus === 'processing';
 
       if (e.target.files.length === 1 && !isPipelineActive) {
         // Single file, pipeline idle → run directly with full progress bar
@@ -517,68 +520,14 @@ export default function EngineView() {
         ? { ...item, progress: Math.max(item.progress, 40), step: 'INTEGRITY' }
         : item));
 
-      // 2. Tax & Ledger Integrity
-      addLog('INTEGRITY', 'Validating GST and bank records.');
-      let integrityData = { status: 'completed', gst_match_rate: null, flags_detected: 0, flags: [] };
-      try {
-        const monthlyExpected = (pdfData.total_revenue || 60000000) / 12;
-        const res2 = await api.post('analysis/integrity-check', {
-          gst_data: [{ month: 'Jan', taxable_value: Math.round(monthlyExpected) }],
-          bank_data: [{ amount: Math.round(monthlyExpected * 0.97) }]
-        });
-        integrityData = res2.data;
-        addLog('INTEGRITY', `Validation complete. Turnover match: ${integrityData.gst_match_rate || 'N/A'}`);
-      } catch (err) {
-        addLog('INTEGRITY', 'WARNING: Integrity service check fallback.');
-      }
-      setQueueItems(prev => prev.map(item => item.id === taskId
-        ? { ...item, progress: Math.max(item.progress, 60), step: 'OSINT' }
-        : item));
+      let integrityData = res1.data.individual_agent_outputs?.integrity_check || { status: 'completed', gst_match_rate: null, flags_detected: 0, flags: [] };
+      let researchData = res1.data.individual_agent_outputs?.web_research || { company_news: [], sector_headwinds: [], litigation_signals: [] };
+      let camData = res1.data.combined_decision || {};
+      let cappedScore = res1.data.adjusted_score || pdfData.base_score || 50;
 
-      // 3. OSINT Web Research
-      addLog('OSINT', 'Checking MCA and public court records.');
-      let researchData = { company_news: [], sector_headwinds: [], litigation_signals: [] };
-      try {
-        const res3 = await api.post('research/web-research', {
-          company_name: pdfData.company_name,
-          sector: pdfData.sector
-        });
-        researchData = res3.data?.data || researchData;
-        addLog('OSINT', `${researchData.sector_headwinds?.length || 0} sector alerts found.`);
-      } catch (err) {
-        addLog('OSINT', 'WARNING: OSINT research fallback.');
-      }
-      setQueueItems(prev => prev.map(item => item.id === taskId
-        ? { ...item, progress: Math.max(item.progress, 75), step: 'RISK' }
-        : item));
-
-      // 4. Risk Score Adjustment
-      addLog('RISK', `Calculating risk score. Base: ${pdfData.base_score || 50}/100`);
-      let cappedScore = pdfData.base_score || 50;
-      try {
-        const res4 = await api.post('research/adjust-score', {
-          base_score: pdfData.base_score || 50,
-          qualitative_notes: pdfData.qualitative_notes
-        });
-        cappedScore = res4.data?.data?.adjusted_score || pdfData.base_score || 50;
-        addLog('RISK', `Risk score finalized: ${cappedScore}/100`);
-      } catch (err) {
-        addLog('RISK', 'Using base risk score.');
-      }
-      setQueueItems(prev => prev.map(item => item.id === taskId
-        ? { ...item, progress: Math.max(item.progress, 90), step: 'CAM_GEN' }
-        : item));
-
-      // 5. CAM Generation
-      addLog('ORCHESTRATION', 'Generating Credit Appraisal Memo.');
-      const res5 = await api.post('reports/generate-cam', {
-        extracted_pdf_data: pdfData,
-        integrity_flags: { ...integrityData, forensics: forensicsData },
-        web_research: researchData,
-        final_score: cappedScore
-      });
-
-      const camData = res5.data?.cam_report || {};
+      addLog('INTEGRITY', `Validation complete. Turnover match: ${integrityData.gst_match_rate || 'N/A'}`);
+      addLog('OSINT', `${researchData.sector_headwinds?.length || 0} sector alerts found.`);
+      addLog('RISK', `Risk score finalized: ${cappedScore}/100`);
       addLog('ORCHESTRATION', `CAM generated. Decision: ${camData.decision || 'UNKNOWN'}`);
 
       const resultData = {
@@ -657,6 +606,24 @@ export default function EngineView() {
     }
 
     setIsProcessingQueue(false);
+
+    // Auto-load the last successfully completed item into the main result view.
+    // Without this, appStatus flips to 'complete' but camReport/detectedParams
+    // remain null, so the render condition never fires and the user sees nothing.
+    setQueueItems(prev => {
+      const lastDone = [...prev].reverse().find(item => item.status === 'completed' && item.resultData);
+      if (lastDone?.resultData) {
+        const rd = lastDone.resultData;
+        if (rd.camReport)      setCamReport(rd.camReport);
+        if (rd.detectedParams) setDetectedParams(rd.detectedParams);
+        if (rd.forensicsReport)setForensicsReport(rd.forensicsReport);
+        if (rd.osintData)      setOsintData(rd.osintData);
+        if (rd.finalScore != null) setFinalScore(rd.finalScore);
+        setActiveQueueItemId(lastDone.id);
+      }
+      return prev;
+    });
+
     setAppStatus('complete');
   };
 
@@ -667,6 +634,20 @@ export default function EngineView() {
     setAppStatus('processing');
     await processSingleQueueTask(targetItem);
     setIsProcessingQueue(false);
+    // Auto-load this task's result into main view
+    setQueueItems(prev => {
+      const done = prev.find(item => item.id === taskId && item.resultData);
+      if (done?.resultData) {
+        const rd = done.resultData;
+        if (rd.camReport)      setCamReport(rd.camReport);
+        if (rd.detectedParams) setDetectedParams(rd.detectedParams);
+        if (rd.forensicsReport)setForensicsReport(rd.forensicsReport);
+        if (rd.osintData)      setOsintData(rd.osintData);
+        if (rd.finalScore != null) setFinalScore(rd.finalScore);
+        setActiveQueueItemId(taskId);
+      }
+      return prev;
+    });
     setAppStatus('complete');
   };
 
@@ -704,6 +685,12 @@ export default function EngineView() {
     setErrorMessage('');
     setAppStatus('idle');
     setLogs([]);
+    // Clear queue so stale items from previous runs don't route new uploads into queue path
+    setQueueItems([]);
+    setActiveQueueItemId(null);
+    setIsProcessingQueue(false);
+    setProgress(0);
+    setFinalScore(null);
   };
 
   // fileArg: pass the File object directly to avoid stale state closure.
@@ -764,64 +751,15 @@ export default function EngineView() {
       }
       setProgress(40);
 
-      addLog('INTEGRITY', 'Validating GST and bank records.');
-      let integrityData = { status: "completed", gst_match_rate: "N/A", flags_detected: 0, flags: [] };
-      try {
-        const monthlyExpected = (pdfData.total_revenue || 60000000) / 12;
-        const res2 = await api.post('analysis/integrity-check', {
-          gst_data: [{ month: "Jan", taxable_value: Math.round(monthlyExpected) }],
-          bank_data: [{ amount: Math.round(monthlyExpected * 0.97) }]
-        });
-        integrityData = res2.data;
-        if (integrityData.flags_detected > 0) {
-          addLog('INTEGRITY', `Validation completed with ${integrityData.flags_detected} flags. Match: ${integrityData.gst_match_rate || 'N/A'}`);
-        } else {
-          addLog('INTEGRITY', `Validation completed. Turnover match: ${integrityData.gst_match_rate || 'N/A'}`);
-        }
-      } catch (err) {
-        addLog('INTEGRITY', 'WARNING: GST verification unavailable. Using default checks.');
-      }
-      setProgress(60);
+      let integrityData = res1.data.individual_agent_outputs?.integrity_check || { status: 'completed', gst_match_rate: null, flags_detected: 0, flags: [] };
+      let researchData = res1.data.individual_agent_outputs?.web_research || { company_news: [], sector_headwinds: [], litigation_signals: [] };
+      let camData = res1.data.combined_decision || {};
+      let cappedScore = res1.data.adjusted_score || pdfData.base_score || 50;
 
-      addLog('OSINT', 'Checking MCA and public court records.');
-      let researchData = { company_news: [], sector_headwinds: [], litigation_signals: [] };
-      try {
-        const res3 = await api.post('research/web-research', {
-          company_name: pdfData.company_name,
-          sector: pdfData.sector
-        });
-        researchData = res3.data?.data || researchData;
-        addLog('OSINT', `${researchData.sector_headwinds?.length || 0} sector alerts found. Litigation status: Clear.`);
-      } catch (err) {
-        addLog('OSINT', 'WARNING: OSINT service unavailable. Using default results.');
-      }
-      setProgress(80);
-
-      addLog('RISK', `Calculating risk score. Base: ${pdfData.base_score || 50}/100`);
-      let cappedScore = pdfData.base_score || 50;
-      try {
-        const res4 = await api.post('research/adjust-score', {
-          base_score: pdfData.base_score || 50,
-          qualitative_notes: pdfData.qualitative_notes
-        });
-        cappedScore = res4.data?.data?.adjusted_score || pdfData.base_score || 50;
-        addLog('RISK', `Risk score finalized: ${cappedScore}/100`);
-      } catch (err) {
-        addLog('RISK', 'Using base risk score.');
-      }
-
-      addLog('ORCHESTRATION', 'Generating Credit Appraisal Memo.');
-      const res5 = await api.post('reports/generate-cam', {
-        extracted_pdf_data: pdfData,
-        integrity_flags: {
-           ...integrityData,
-           forensics: forensicsData
-        },
-        web_research: researchData,
-        final_score: cappedScore
-      });
-      
-      const camData = res5.data?.cam_report;
+      addLog('INTEGRITY', `Validation complete. Turnover match: ${integrityData.gst_match_rate || 'N/A'}`);
+      addLog('OSINT', `${researchData.sector_headwinds?.length || 0} sector alerts found.`);
+      addLog('RISK', `Risk score finalized: ${cappedScore}/100`);
+      addLog('ORCHESTRATION', `CAM generated. Decision: ${camData.decision || 'UNKNOWN'}`);
       
       setCamReport(camData);
       setFinalScore(cappedScore);

@@ -45,6 +45,7 @@ const NAV = {
         { to: '/platform/organizations', label: 'Organizations', icon: Building2, available: true },
         { to: '/platform/users', label: 'Users', icon: Users, available: true },
         { to: '/platform/cases', label: 'Cases', icon: FolderOpen, available: true },
+        { to: '/engine', label: 'Analysis Engine', icon: FileText, available: true },
         { to: '/platform/health', label: 'System Health', icon: Server, available: true },
         { to: '/platform/ai', label: 'AI / Model Ops', icon: Activity, available: true },
         { to: '/platform/usage', label: 'Usage & Cost', icon: Gauge, available: true },
@@ -60,6 +61,7 @@ const NAV = {
       items: [
         { to: '/admin', label: 'Overview', icon: LayoutDashboard, available: true },
         { to: '/admin/cases', label: 'Cases', icon: FolderOpen, available: true },
+        { to: '/engine', label: 'Analysis Engine', icon: FileText, available: true },
         { to: '/admin/users', label: 'Users', icon: Users, available: true },
         { to: '/admin/analytics', label: 'Analytics', icon: Activity, available: false },
         { to: '/admin/audit', label: 'Audit Log', icon: ShieldCheck, available: true },
@@ -120,3 +122,4 @@ export function homeRouteFor(role) {
       return '/login';
   }
 }
+
