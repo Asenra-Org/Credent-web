@@ -21,7 +21,7 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { getStatusInfo } from '../lib/caseStatus';
+
 
 // Helper for large numbers
 const formatToCr = (num) => {
