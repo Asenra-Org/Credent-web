@@ -608,23 +608,23 @@ export default function EngineView() {
     setIsProcessingQueue(false);
 
     // Auto-load the last successfully completed item into the main result view.
-    // Without this, appStatus flips to 'complete' but camReport/detectedParams
-    // remain null, so the render condition never fires and the user sees nothing.
+    // We use setTimeout to break out of the setState callback anti-pattern.
     setQueueItems(prev => {
       const lastDone = [...prev].reverse().find(item => item.status === 'completed' && item.resultData);
-      if (lastDone?.resultData) {
-        const rd = lastDone.resultData;
-        if (rd.camReport)      setCamReport(rd.camReport);
-        if (rd.detectedParams) setDetectedParams(rd.detectedParams);
-        if (rd.forensicsReport)setForensicsReport(rd.forensicsReport);
-        if (rd.osintData)      setOsintData(rd.osintData);
-        if (rd.finalScore != null) setFinalScore(rd.finalScore);
-        setActiveQueueItemId(lastDone.id);
-      }
+      setTimeout(() => {
+        if (lastDone?.resultData) {
+          const rd = lastDone.resultData;
+          if (rd.camReport)      setCamReport(rd.camReport);
+          if (rd.detectedParams) setDetectedParams(rd.detectedParams);
+          if (rd.forensicsReport)setForensicsReport(rd.forensicsReport);
+          if (rd.osintData)      setOsintData(rd.osintData);
+          if (rd.finalScore != null) setFinalScore(rd.finalScore);
+          setActiveQueueItemId(lastDone.id);
+        }
+        setAppStatus('complete');
+      }, 0);
       return prev;
     });
-
-    setAppStatus('complete');
   };
 
   const resumeFailedTask = async (taskId) => {
