@@ -12,7 +12,7 @@ export default function ProtectedRoute({ requiredRoles }) {
     const checkAuth = async () => {
       if (!isAuthenticated) {
         try {
-          await refresh();
+          await refresh(true);
         } catch (err) {
           // Not authenticated
         }

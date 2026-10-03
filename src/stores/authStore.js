@@ -91,11 +91,12 @@ export const useAuthStore = create(
     }
   },
 
-  refresh: async () => {
+  refresh: async (isInitial = false) => {
     let lastError = null;
-    for (let attempt = 0; attempt < MAX_REFRESH_ATTEMPTS; attempt += 1) {
+    const maxAttempts = isInitial ? 1 : MAX_REFRESH_ATTEMPTS;
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       try {
-        const res = await authApi.post("/auth/refresh");
+        const res = await authApi.post("/auth/refresh", {}, isInitial ? { timeout: 5000 } : {});
         const token = res.data.access_token;
         set({ accessToken: token, isAuthenticated: true });
         if (!get().user) await get().fetchProfile(token);
@@ -106,12 +107,12 @@ export const useAuthStore = create(
           get().clearAuth();
           throw new SessionExpiredError(err?.response?.status);
         }
-        if (attempt < MAX_REFRESH_ATTEMPTS - 1) {
+        if (attempt < maxAttempts - 1) {
           await new Promise((resolve) => setTimeout(resolve, refreshBackoffMs(attempt)));
         }
       }
     }
-    throw new TransientAuthError(lastError, MAX_REFRESH_ATTEMPTS);
+    throw new TransientAuthError(lastError, maxAttempts);
   },
 
   logout: async () => {
