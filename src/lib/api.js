@@ -9,7 +9,7 @@ import { isSessionInvalid } from './authErrors';
 // third-party cookie, which browsers increasingly refuse to send - refresh
 // would then fail permanently rather than intermittently.
 // An explicit VITE_API_URL still wins, so existing deployments are unaffected.
-const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? "https://credent-api.onrender.com/api/v1" : "/api/v1");
 const API_URL = API_BASE.endsWith('/api/v1') ? API_BASE : `${API_BASE.replace(/\/$/, '')}/api/v1`;
 
 const api = axios.create({
