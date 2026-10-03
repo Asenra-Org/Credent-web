@@ -797,18 +797,6 @@ export default function EngineView() {
   const decisionStyle = camReport ? getDecisionStyle(camReport.decision) : null;
   const incompleteNotice = camReport ? getIncompleteNotice(camReport) : null;
 
-  if (appStatus === 'complete' && camReport) {
-    return (
-      <ReportDashboard 
-        camReport={camReport} 
-        detectedParams={detectedParams} 
-        finalScore={finalScore} 
-        onReset={resetState} 
-        onExport={handleDownloadPDF} 
-      />
-    );
-  }
-
   return (
     <div className="cx-engine-legacy">
 
@@ -1392,6 +1380,257 @@ export default function EngineView() {
                     </div>
                   )}
 
+                  {/* Complete state: show detailed results table */}
+                  {appStatus === 'complete' && camReport && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      
+                      {/* Inside Container Navigation Tabs */}
+                      <div style={{ display: 'flex', borderBottom: '1px solid #cbd5e1', gap: '0.25rem', overflowX: 'auto' }}>
+                        {['EXECUTIVE SUMMARY', 'CREDIT ASSESSMENT (5Cs)', 'FINANCIAL STATEMENTS', 'RISKS & GAPS', 'SYSTEM LOGS'].map(tab => (
+                          <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            style={{ 
+                              padding: '0.5rem 1rem', 
+                              background: 'none', 
+                              border: 'none', 
+                              borderBottom: activeTab === tab ? '2px solid #18181b' : '2px solid transparent', 
+                              fontSize: '11px', 
+                              fontWeight: 600, 
+                              color: activeTab === tab ? '#18181b' : '#71717a', 
+                              cursor: 'pointer',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.03em',
+                              transition: 'color 0.15s',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {tab}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Tab Contents */}
+                      <div style={{ minHeight: '200px' }}>
+                        
+                        {/* Tab 0: Executive Summary */}
+                        {activeTab === 'EXECUTIVE SUMMARY' && (
+                          <ReportDashboard 
+                            camReport={camReport} 
+                            detectedParams={detectedParams} 
+                            finalScore={finalScore} 
+                          />
+                        )}
+
+                        {/* Tab 1: Credit Appraisal Ledger */}
+                        {activeTab === 'CREDIT ASSESSMENT (5Cs)' && (
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                            <thead>
+                              <tr style={{ borderBottom: '1px solid #cbd5e1', color: '#71717a', textTransform: 'uppercase', fontSize: '10px' }}>
+                                <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600 }}>C-Factor Parameter</th>
+                                <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600 }}>Extraction Appraisal Assessment</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {Object.entries(camReport?.five_cs || {}).map(([key, val]) => (
+                                <tr key={key} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                  <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, textTransform: 'uppercase', color: '#27272a', fontFamily: 'var(--font-mono)', width: '150px' }}>{key}</td>
+                                  <td style={{ padding: '0.6rem 0.75rem', color: '#71717a', lineHeight: '1.4' }}>
+                                    {typeof val === 'string' ? val : (val.text || val.assessment)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+
+                        {/* Tab 2: Financial Statements Table */}
+                        {activeTab === 'FINANCIAL STATEMENTS' && (
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                            <thead>
+                              <tr style={{ borderBottom: '1px solid #cbd5e1', color: '#71717a', textTransform: 'uppercase', fontSize: '10px' }}>
+                                <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600 }}>Ledger Entry Description</th>
+                                <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600, textAlign: 'right' }}>Declared Value (INR)</th>
+                                <th style={{ padding: '0.5rem 0.75rem', fontWeight: 600, textAlign: 'right' }}>Audit Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600 }}>Total Revenue (GSTR Correlation)</td>
+                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)', color: '#18181b' }}>{formatToCr(detectedParams?.revenue || camReport?.executive_summary?.revenue)}</td>
+                                <td style={{ padding: '0.6rem 0.75rem', color: '#18181b', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)' }}>VERIFIED</td>
+                              </tr>
+                              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600 }}>Total Financial Borrowings (Bank Ledger)</td>
+                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)', color: '#18181b' }}>{formatToCr(detectedParams?.debt || camReport?.executive_summary?.total_debt)}</td>
+                                <td style={{ padding: '0.6rem 0.75rem', color: '#18181b', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)' }}>VERIFIED</td>
+                              </tr>
+                              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600 }}>Shareholder Net Worth</td>
+                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)', color: '#18181b' }}>{formatToCr(detectedParams?.worth || camReport?.executive_summary?.net_worth)}</td>
+                                <td style={{ padding: '0.6rem 0.75rem', color: '#18181b', fontWeight: 600, textAlign: 'right', fontFamily: 'var(--font-mono)' }}>EXTRACTED</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        )}
+
+                        {/* Tab 3: OSINT litigation Registry */}
+                        {(activeTab === 'RISKS & GAPS' || activeTab === 'OSINT REGISTRY') && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {osintData ? (
+                              <>
+                                <div style={{ padding: '0.75rem', background: '#fafafa', border: '1px solid #cbd5e1', borderRadius: 0 }}>
+                                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#27272a', fontFamily: 'var(--font-mono)' }}>[LITIGATION] INDIAN_COURTS_INDEX_SEARCH</span>
+                                  {osintData.litigation_signals && osintData.litigation_signals.length > 0 ? (
+                                    <ul style={{ margin: '8px 0 0 16px', color: '#71717a', lineHeight: '1.4', padding: 0 }}>
+                                      {osintData.litigation_signals.map((sig, i) => <li key={i}>{sig}</li>)}
+                                    </ul>
+                                  ) : (
+                                    <p style={{ margin: '4px 0 0 0', color: '#71717a', lineHeight: '1.4' }}>No active debt declarations or pending credit recovery lawsuits found.</p>
+                                  )}
+                                </div>
+                                <div style={{ padding: '0.75rem', background: '#fafafa', border: '1px solid #cbd5e1', borderRadius: 0 }}>
+                                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#27272a', fontFamily: 'var(--font-mono)' }}>[NEWS] COMPANY_WEB_CRAWL</span>
+                                  {osintData.company_news && osintData.company_news.length > 0 ? (
+                                    <ul style={{ margin: '8px 0 0 16px', color: '#71717a', lineHeight: '1.4', padding: 0 }}>
+                                      {osintData.company_news.map((news, i) => <li key={i}>{news}</li>)}
+                                    </ul>
+                                  ) : (
+                                    <p style={{ margin: '4px 0 0 0', color: '#71717a', lineHeight: '1.4' }}>No adverse media or critical systemic alerts detected in open-source databases.</p>
+                                  )}
+                                </div>
+                                <div style={{ padding: '0.75rem', background: '#fafafa', border: '1px solid #cbd5e1', borderRadius: 0 }}>
+                                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#27272a', fontFamily: 'var(--font-mono)' }}>[SECTOR] RBI_HEADWINDS_MONITOR</span>
+                                  {osintData.sector_headwinds && osintData.sector_headwinds.length > 0 ? (
+                                    <ul style={{ margin: '8px 0 0 16px', color: '#71717a', lineHeight: '1.4', padding: 0 }}>
+                                      {osintData.sector_headwinds.map((alert, i) => <li key={i}>{alert}</li>)}
+                                    </ul>
+                                  ) : (
+                                    <p style={{ margin: '4px 0 0 0', color: '#71717a', lineHeight: '1.4' }}>No major regulatory or sector headwinds detected.</p>
+                                  )}
+                                </div>
+                              </>
+                            ) : (
+                              <div style={{ padding: '0.75rem', background: '#fafafa', border: '1px solid #cbd5e1', borderRadius: 0 }}>
+                                <span style={{ fontSize: '10px', fontWeight: 800, color: '#27272a', fontFamily: 'var(--font-mono)' }}>[OSINT] PENDING</span>
+                                <p style={{ margin: '4px 0 0 0', color: '#71717a', lineHeight: '1.4' }}>
+                                  Waiting for OSINT data to be processed...
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Tab 4: System Logs Monitor */}
+                        {activeTab === 'SYSTEM LOGS' && (
+                          <div style={{ 
+                            background: '#1f262d', 
+                            color: '#a1a1aa', 
+                            padding: '0.75rem', 
+                            fontFamily: 'var(--font-mono)', 
+                            fontSize: '11px',
+                            maxHeight: '220px',
+                            overflowY: 'auto'
+                          }}>
+                            {logs.map((log, idx) => (
+                              <div key={idx} style={{ color: log.includes('FATAL') || log.includes('WARNING') ? '#ef4444' : '#a1a1aa' }}>{log}</div>
+                            ))}
+                            <div ref={logEndRef} />
+                          </div>
+                        )}
+
+                      </div>
+
+                      {/* Decision Actions & Export Buttons */}
+                      <div style={{ 
+                        borderTop: '1px solid #cbd5e1', 
+                        paddingTop: '1.25rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '1rem'
+                      }}>
+                        
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '2rem',
+                          background: '#fafafa',
+                          padding: '0.75rem 1.5rem',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: 0
+                        }}>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontSize: '9px', color: '#71717a', fontWeight: 600, textTransform: 'uppercase' }}>DECISION</span>
+                            <span style={{ 
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontWeight: 900, 
+                              color: decisionStyle.color, 
+                              fontSize: '14px',
+                              fontFamily: 'var(--font-mono)'
+                            }}>
+                              <decisionStyle.Icon size={14} />
+                              {decisionStyle.label}
+                            </span>
+                          </div>
+                          
+                          <div style={{ width: '1px', height: '24px', background: 'var(--border-light)' }} />
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontSize: '9px', color: '#71717a', fontWeight: 600, textTransform: 'uppercase' }}>LIMIT APPROVAL</span>
+                            <span style={{ fontWeight: 800, color: '#27272a', fontSize: '13px', fontFamily: 'var(--font-mono)' }}>{camReport.recommended_loan_amount}</span>
+                          </div>
+
+                          <div style={{ width: '1px', height: '24px', background: 'var(--border-light)' }} />
+
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontSize: '9px', color: '#71717a', fontWeight: 600, textTransform: 'uppercase' }}>INTEREST RATE</span>
+                            <span style={{ fontWeight: 800, color: '#27272a', fontSize: '13px', fontFamily: 'var(--font-mono)' }}>{camReport.recommended_interest_rate}</span>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.75rem' }}>
+                          <button 
+                            onClick={handleDownloadPDF}
+                            style={{ 
+                              background: '#18181b', 
+                              color: '#ffffff', 
+                              border: 'none', 
+                              padding: '0.5rem 1.5rem', 
+                              fontSize: '12px',
+                              fontWeight: 600, 
+                              cursor: 'pointer',
+                              borderRadius: 0,
+                              transition: 'background 0.15s'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#155cb0'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#18181b'}
+                          >
+                            All Transactions & Appraisal Memo PDF
+                          </button>
+
+                          <button 
+                            onClick={resetState}
+                            style={{ 
+                              background: '#ffffff', boxShadow: 'none', 
+                              color: '#71717a', 
+                              border: '1px solid #cbd5e1', 
+                              padding: '0.5rem 1rem', 
+                              fontSize: '12px',
+                              fontWeight: 600, 
+                              cursor: 'pointer',
+                              borderRadius: 0
+                            }}
+                          >
+                            Reset Workspace
+                          </button>
+                        </div>
+                      </div>
+
+                    </div>
+                  )}
 
                   {/* Fallback if complete state reached without a report */}
                   {appStatus === 'complete' && !camReport && (

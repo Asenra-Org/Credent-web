@@ -63,8 +63,7 @@ export default function ReportDashboard({
   onReset, 
   onExport 
 }) {
-  const [activeTab, setActiveTab] = useState('Executive Summary');
-  
+    
   // Safe fallbacks
   const borrowerName = detectedParams?.company || camReport?.borrower_profile?.legal_name || 'Borrower';
   const industry = camReport?.borrower_profile?.industry || 'Manufacturing';
@@ -73,172 +72,11 @@ export default function ReportDashboard({
   const revenue = detectedParams?.revenue || camReport?.executive_summary?.revenue;
   const isHighRisk = finalScore >= 80;
 
-  const tabs = ['Executive Summary', 'Credit Assessment (5Cs)', 'Financial Statements', 'Risks & Gaps', 'System Logs'];
-
+  
   return (
-    <div className="w-full bg-white min-h-screen text-zinc-900 font-sans">
+    <div className="flex flex-col gap-6">
+{/* Content Area */}
       
-      {/* Top Header Section */}
-      <div className="flex flex-col border-b border-zinc-200 p-6 pb-4">
-        {/* Breadcrumb & Actions */}
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-2 text-xs text-zinc-500">
-            <span>Cases</span>
-            <span>&gt;</span>
-            <span className="font-semibold text-zinc-900">{borrowerName}</span>
-            <span className="flex items-center gap-1 ml-2">
-              <span className="w-2 h-2 rounded-full bg-green-500"></span>
-              Analysis Completed
-            </span>
-            <span className="mx-2">•</span>
-            <span>18 Sep 2026, 11:33 PM</span>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={onExport}
-              className="flex items-center gap-2 px-4 py-2 border border-zinc-200 text-sm font-semibold rounded-none hover:bg-zinc-50"
-            >
-              <Download size={14} /> Export PDF
-            </button>
-            <button 
-              onClick={onReset}
-              className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white text-sm font-semibold rounded-none hover:bg-zinc-800"
-            >
-              <Plus size={14} /> New Appraisal
-            </button>
-          </div>
-        </div>
-
-        {/* Title Block */}
-        <div className="flex justify-between items-end">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-3xl font-bold tracking-tight">{borrowerName}</h1>
-              <span className="px-2 py-0.5 border border-zinc-200 text-xs font-semibold uppercase text-zinc-500 rounded-sm bg-zinc-50">SME</span>
-            </div>
-            <div className="text-sm text-zinc-500">
-              {industry} &nbsp;•&nbsp; {location} &nbsp;•&nbsp; CIN: {cin}
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-8 text-xs">
-            <div className="flex flex-col">
-              <span className="text-zinc-500 mb-1">Case ID</span>
-              <span className="font-semibold">CR-2026-0192</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-zinc-500 mb-1">Analysis Type</span>
-              <span className="font-semibold">Term Loan</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-zinc-500 mb-1">Analyst</span>
-              <span className="font-semibold">Karan Patil</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-zinc-500 mb-1">Last Updated</span>
-              <span className="font-semibold">18 Sep 2026, 11:39 PM</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Metrics Row */}
-      <div className="grid grid-cols-4 gap-4 p-6 bg-zinc-50 border-b border-zinc-200">
-        
-        {/* Score Card */}
-        <div className="bg-white p-4 border border-zinc-200 flex flex-col justify-between">
-          <div className="flex items-center gap-1 text-sm font-semibold text-zinc-800">
-            Risk Appraisal Score <Info size={12} className="text-zinc-400" />
-          </div>
-          <div className="flex items-center justify-between mt-2 mb-3">
-            <div className="text-3xl font-bold">
-              {finalScore || 85} <span className="text-lg text-zinc-400 font-normal">/ 100</span>
-            </div>
-            <div className={`px-2 py-1 text-[10px] font-bold uppercase rounded-sm ${isHighRisk ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}`}>
-              {isHighRisk ? 'HIGH RISK' : 'LOW RISK'}
-            </div>
-          </div>
-          {/* Mock Progress Bar */}
-          <div className="flex w-full h-2 gap-1 mt-auto">
-            <div className="h-full bg-red-500 flex-1 rounded-l-sm" />
-            <div className="h-full bg-orange-400 flex-1" />
-            <div className="h-full bg-orange-200 flex-1" />
-            <div className="h-full bg-zinc-200 flex-1 rounded-r-sm" />
-          </div>
-        </div>
-
-        {/* Turnover Card */}
-        <div className="bg-white p-4 border border-zinc-200 flex flex-col justify-between">
-          <div className="text-sm font-semibold text-zinc-800">
-            Annual Turnover (Matched)
-          </div>
-          <div className="flex items-center justify-between mt-2 mb-1">
-            <div className="text-2xl font-bold font-mono">
-              {formatToCr(revenue)}
-            </div>
-            <div className="px-2 py-1 text-[10px] font-bold text-green-700 bg-green-50 border border-green-100 rounded-sm flex items-center gap-1">
-              ↑ 12%
-            </div>
-          </div>
-          <div className="text-xs text-zinc-500 mt-auto">
-            FY2024 • From GST & Financials
-          </div>
-        </div>
-
-        {/* DSCR Card */}
-        <div className="bg-white p-4 border border-zinc-200 flex flex-col justify-between">
-          <div className="flex items-center gap-1 text-sm font-semibold text-zinc-800">
-            DSCR (Calculated) <Info size={12} className="text-zinc-400" />
-          </div>
-          <div className="text-3xl font-bold mt-2 mb-1">
-            N/A
-          </div>
-          <div className="flex items-center gap-1 text-xs text-zinc-500 mt-auto">
-            Insufficient financial data <Info size={12} className="text-zinc-400" />
-          </div>
-        </div>
-
-        {/* Assessment Card */}
-        <div className="bg-white p-4 border border-zinc-200 flex flex-col justify-between">
-          <div className="flex items-center gap-1 text-sm font-semibold text-zinc-800">
-            Overall Assessment <Info size={12} className="text-zinc-400" />
-          </div>
-          <div className="flex items-center gap-2 mt-2 mb-1">
-            <AlertTriangle className="text-yellow-500" size={24} />
-            <div className="text-lg font-bold">Manual Review Required</div>
-          </div>
-          <div className="text-xs text-zinc-500 mt-auto">
-            System recommendation based on available data
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex justify-between items-center border-b border-zinc-200 px-6">
-        <div className="flex gap-8">
-          {tabs.map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`py-4 text-sm font-semibold border-b-2 transition-colors ${
-                activeTab === tab 
-                  ? 'border-zinc-900 text-zinc-900' 
-                  : 'border-transparent text-zinc-500 hover:text-zinc-800'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-        <div className="flex bg-zinc-100 p-1 rounded-sm">
-          <button className="px-4 py-1 text-xs font-semibold bg-zinc-900 text-white shadow-sm">Overview</button>
-          <button className="px-4 py-1 text-xs font-semibold text-zinc-500 hover:text-zinc-800">Detailed View</button>
-        </div>
-      </div>
-
-      {/* Content Area */}
-      {activeTab === 'Executive Summary' && (
         <div className="grid grid-cols-12 gap-6 p-6 bg-zinc-50">
           
           {/* Main Left Column */}
@@ -488,15 +326,8 @@ export default function ReportDashboard({
           </div>
 
         </div>
-      )}
       
-      {/* Other Tabs placeholder */}
-      {activeTab !== 'Executive Summary' && (
-        <div className="p-8 text-center text-zinc-500 text-sm">
-          Content for {activeTab} will appear here.
-        </div>
-      )}
-
-    </div>
+      
+      </div>
   );
 }
