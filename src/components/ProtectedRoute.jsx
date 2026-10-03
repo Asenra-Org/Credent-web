@@ -5,7 +5,7 @@ import { Shield, Loader2 } from 'lucide-react';
 
 export default function ProtectedRoute({ requiredRoles }) {
   const { isAuthenticated, user, refresh, hasAnyRole } = useAuthStore();
-  const [isChecking, setIsChecking] = useState(true);
+  const [isChecking, setIsChecking] = useState(!isAuthenticated);
   const location = useLocation();
 
   useEffect(() => {

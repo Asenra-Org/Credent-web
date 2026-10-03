@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import axios from "axios";
 import {
   MAX_REFRESH_ATTEMPTS,
@@ -17,7 +18,9 @@ const authApi = axios.create({
   withCredentials: true,
 });
 
-export const useAuthStore = create((set, get) => ({
+export const useAuthStore = create(
+  persist(
+    (set, get) => ({
   accessToken: null,
   user: null,
   isLoading: false,
@@ -131,4 +134,13 @@ export const useAuthStore = create((set, get) => ({
 
   hasRole: (role) => { const user = get().user; if (!user) return false; return user.role === role; },
   hasAnyRole: (roles) => { const user = get().user; if (!user) return false; return roles.includes(user.role); },
-}));
+}),
+{
+  name: 'cresem-auth-storage',
+  partialize: (state) => ({ 
+    accessToken: state.accessToken, 
+    user: state.user, 
+    isAuthenticated: state.isAuthenticated 
+  })
+}
+));
